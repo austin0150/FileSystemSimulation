@@ -1,20 +1,104 @@
-// UMDLibFS.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
+#include "UMDLibFS.h"
 
-#include <iostream>
+int WorkingDisk[];
+int ExternalDisk[];
 
-int main()
+void UMDLibFS()
 {
-    std::cout << "Hello World!\n";
+
 }
 
-// Run program: Ctrl + F5 or Debug > Start Without Debugging menu
-// Debug program: F5 or Debug > Start Debugging menu
+int UMDLibFS::FSBoot()
+{
+	return 0;
+}
 
-// Tips for Getting Started: 
-//   1. Use the Solution Explorer window to add/manage files
-//   2. Use the Team Explorer window to connect to source control
-//   3. Use the Output window to see build output and other messages
-//   4. Use the Error List window to view errors
-//   5. Go to Project > Add New Item to create new code files, or Project > Add Existing Item to add existing code files to the project
-//   6. In the future, to open this project again, go to File > Open > Project and select the .sln file
+int UMDLibFS::FSSync()
+{
+	return 0;
+}
+
+int UMDLibFS::FSReset()
+{
+	return 0;
+}
+
+int UMDLibFS::FileCreate(string file)
+{
+	return 0;
+}
+
+int UMDLibFS::FileOpen(string file)
+{
+	return 0;
+}
+
+int UMDLibFS::FileRead(int fd, string buffer, int size)
+{
+	return 0;
+}
+
+int UMDLibFS::FileWrite(int fd, string buffer, int size)
+{
+	return 0;
+}
+
+int UMDLibFS::FileSeek(int fd, int offset)
+{
+	return 0;
+}
+
+int UMDLibFS::FileClose(int fd)
+{
+	return 0;
+}
+
+int UMDLibFS::FileUnlink(string file)
+{
+	return 0;
+}
+
+int UMDLibFS::DirCreate(string path)
+{
+	return 0;
+}
+
+int UMDLibFS::DirSize(string path)
+{
+	return 0;
+}
+
+int UMDLibFS::DirRead(string path, string buffer, int size)
+{
+	return 0;
+}
+
+int UMDLibFS::DirUnlink(string path)
+{
+	return 0;
+}
+
+int UMDLibFS::DiskInit()
+{
+	return 0;
+}
+
+int UMDLibFS::DiskLoad()
+{
+	return 0;
+}
+
+int UMDLibFS::DiskSave()
+{
+	return 0;
+}
+
+int UMDLibFS::DiskWrite(int sector, string buffer)
+{
+	return 0;
+}
+
+int UMDLibFS::DiskRead(int sector, string buffer)
+{
+	return 0;
+}
