@@ -1,7 +1,6 @@
 #pragma once
 #include <string>
 #include <cstddef>
-#include "Inode.h"
 
 using namespace std;
 
@@ -19,8 +18,8 @@ public:
 	//[1000 - 1999] reserved for Inode Bitmap (Use InodeMap)
 	//[2000 - 2999] reserved for datablock bitmap (Use DataBlockMap)
 	//[3000 - 3999] reserved for Inodes (3000 - 3029) is root Inode
-	int WorkingDisk[512000];
-	int ExternalDisk[512000];
+	int WorkingDisk[512];
+	int ExternalDisk[512];
 
 	//For Inodes
 	// [0] = size
@@ -47,7 +46,7 @@ public:
 	int DiskLoad();
 	int DiskSave();
 	int DiskWrite(int sector, string buffer);
-	int DiskRead(int sector, string &buffer);
+	int DiskRead(int sector, string buffer);
 
 	int FileCreate(string file);
 	int FileOpen(string file);
@@ -61,5 +60,7 @@ public:
 	int DirSize(string path);
 	int DirRead(string path, string buffer, int size);
 	int DirUnlink(string path);
+
+	int SplitFilePath(string splitPath[], string path);
 };
 

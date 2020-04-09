@@ -1,4 +1,5 @@
 #include "UMDLibFS.h"
+#include <list>
 
 //int WorkingDisk[];
 //int ExternalDisk[];
@@ -60,6 +61,13 @@ int UMDLibFS::FileUnlink(string file)
 
 int UMDLibFS::DirCreate(string path)
 {
+	string pathSplit[256];
+	int splitResult = (SplitFilePath(pathSplit, path) -1);
+
+	for (int i = 0; i < splitResult; i++)
+	{
+
+	}
 
 	return 0;
 }
@@ -106,7 +114,7 @@ int UMDLibFS::DiskWrite(int sector, string buffer)
 		osErrMsg = "E_WRITE_INVALID_PARAM";
 		return -1;
 	}
-	if (buffer.empty)
+	if (buffer == "")
 	{
 		osErrMsg = "E_WRITE_INVALID_PARAM";
 		return -1;
@@ -123,14 +131,14 @@ int UMDLibFS::DiskWrite(int sector, string buffer)
 	return 0;
 }
 
-int UMDLibFS::DiskRead(int sector, string& buffer)
+int UMDLibFS::DiskRead(int sector, string buffer)
 {
 	if (sector < 0 || (sector >= NUM_SECTORS))
 	{
 		osErrMsg = "E_READ_INVALID_PARAM";
 		return -1;
 	}
-	if (buffer.empty)
+	if (buffer == "")
 	{
 		osErrMsg = "E_READ_INVALID_PARAM";
 		return -1;
@@ -144,4 +152,42 @@ int UMDLibFS::DiskRead(int sector, string& buffer)
 	}
 
 	return 0;
+}
+
+int UMDLibFS::SplitFilePath(string splitPath[256], string path)
+{
+	int startName = 0;
+	//int endName = 0;
+	int pathCounter = 0;
+	bool inName = false;
+	bool endName = false;
+	int length = path.length();
+	for (int i = 0; i < length; i++)
+	{
+		if (path[i] == '/')
+		{
+			if (inName)
+			{
+				splitPath[pathCounter] = path.substr(startName, (i - startName));
+				pathCounter++;
+				startName = i + 1;
+			}
+			else
+			{
+				startName = i + 1;
+				inName = true;
+			}
+		}
+		else if (path[i] == '.')
+		{
+			endName = true;
+		}
+		
+		if (i == length - 1 && endName)
+		{
+			splitPath[pathCounter] = path.substr(startName, (i - (startName - 1)));
+		}
+	}
+
+	return pathCounter;
 }
