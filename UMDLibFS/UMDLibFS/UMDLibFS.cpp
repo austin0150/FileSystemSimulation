@@ -5,6 +5,7 @@
 
 void UMDLibFS()
 {
+	
 }
 
 int UMDLibFS::FSBoot()
@@ -59,6 +60,7 @@ int UMDLibFS::FileUnlink(string file)
 
 int UMDLibFS::DirCreate(string path)
 {
+
 	return 0;
 }
 
