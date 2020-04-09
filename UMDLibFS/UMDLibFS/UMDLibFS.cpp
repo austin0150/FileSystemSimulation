@@ -1,11 +1,10 @@
 #include "UMDLibFS.h"
 
-int WorkingDisk[];
-int ExternalDisk[];
+//int WorkingDisk[];
+//int ExternalDisk[];
 
 void UMDLibFS()
 {
-
 }
 
 int UMDLibFS::FSBoot()
@@ -90,15 +89,57 @@ int UMDLibFS::DiskLoad()
 
 int UMDLibFS::DiskSave()
 {
+	int length = sizeof(WorkingDisk) / sizeof(*WorkingDisk);
+	for (int i = 0; i < length; i++)
+	{
+		ExternalDisk[i] = WorkingDisk[i];
+	}
 	return 0;
 }
 
 int UMDLibFS::DiskWrite(int sector, string buffer)
 {
+	if (sector < 0 || (sector >= NUM_SECTORS))
+	{
+		osErrMsg = "E_WRITE_INVALID_PARAM";
+		return -1;
+	}
+	if (buffer.empty)
+	{
+		osErrMsg = "E_WRITE_INVALID_PARAM";
+		return -1;
+	}
+
+	int offsetIndex = sector * 1000;
+
+	int length = sizeof(WorkingDisk) / sizeof(*WorkingDisk);
+	for (int i = 0; i < length; i++)
+	{
+		WorkingDisk[i + offsetIndex] = buffer[i];
+	}
+
 	return 0;
 }
 
-int UMDLibFS::DiskRead(int sector, string buffer)
+int UMDLibFS::DiskRead(int sector, string& buffer)
 {
+	if (sector < 0 || (sector >= NUM_SECTORS))
+	{
+		osErrMsg = "E_READ_INVALID_PARAM";
+		return -1;
+	}
+	if (buffer.empty)
+	{
+		osErrMsg = "E_READ_INVALID_PARAM";
+		return -1;
+	}
+
+	int offsetIndex = sector * 1000;
+	int length = sizeof(WorkingDisk) / sizeof(*WorkingDisk);
+	for (int i = 0; i < length; i++)
+	{
+		buffer[i] = WorkingDisk[i + offsetIndex];
+	}
+
 	return 0;
 }

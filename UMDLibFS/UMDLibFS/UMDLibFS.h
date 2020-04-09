@@ -12,6 +12,7 @@ public:
 	int SECTOR_SIZE = 1000;
 	int MAX_FILES = 100;
 	int SUPERBLOCK_NUMBER = 15;
+	string osErrMsg;
 
 	//[0 - 999] SuperBlock (put the magic number in index 0)
 	//[1000 - 1999] reserved for Inode Bitmap (Use InodeMap)
@@ -32,7 +33,7 @@ public:
 	int DiskLoad();
 	int DiskSave();
 	int DiskWrite(int sector, string buffer);
-	int DiskRead(int sector, string buffer);
+	int DiskRead(int sector, string &buffer);
 
 	int FileCreate(string file);
 	int FileOpen(string file);
