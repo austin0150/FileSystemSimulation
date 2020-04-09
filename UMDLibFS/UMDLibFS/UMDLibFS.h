@@ -8,18 +8,18 @@ class UMDLibFS
 {
 public:
 	bool FileSystemUnavailible;
-	int NUM_SECTORS = 512;
-	int SECTOR_SIZE = 1000;
+	int NUM_SECTORS = 1000;
+	int SECTOR_SIZE = 128;
 	int MAX_FILES = 100;
 	int SUPERBLOCK_NUMBER = 15;
 	string osErrMsg;
 
-	//[0 - 999] SuperBlock (put the magic number in index 0)
-	//[1000 - 1999] reserved for Inode Bitmap (Use InodeMap)
-	//[2000 - 2999] reserved for datablock bitmap (Use DataBlockMap)
-	//[3000 - 3999] reserved for Inodes (3000 - 3029) is root Inode
-	int WorkingDisk[512];
-	int ExternalDisk[512];
+	//[0 - 128] SuperBlock (put the magic number in index 0)
+	//[129 - 256] reserved for Inode Bitmap (Use InodeMap)
+	//[257 - 384] reserved for datablock bitmap (Use DataBlockMap)
+	//[385 - 768] reserved for Inodes (385 - 415) is root Inode
+	int WorkingDisk[128000];
+	int ExternalDisk[128000];
 
 	//For Inodes
 	// [0] = size
@@ -31,7 +31,7 @@ public:
 	// [12-27] = file name
 	// [28] = Inode Number
 	// [29] = Parent directory
-	// -- Inode takes 30 ints, max of 100 inodes, so inodes need 300 ints (less than 1 datablock)
+	// -- Inode takes 30 ints, max of 100 inodes, so inodes need 300 ints 3 blocks
 
 	bool InodeMap[4000];
 	bool DataBlockMap[4096];
