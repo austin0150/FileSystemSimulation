@@ -1,8 +1,24 @@
 #include "UMDLibFS.h"
 #include <list>
 
-//int WorkingDisk[];
-//int ExternalDisk[];
+//[0][] SuperBlock (put the magic number in index 0)
+	//[1][] reserved for Inode Bitmap (Use InodeMap)
+	//[2][] reserved for datablock bitmap (Use DataBlockMap)
+	//[3 - 5][] reserved for Inodes ([3][0-29]) is root Inode
+static int WorkingDisk[1000][128];
+static int ExternalDisk[1000][128];
+
+//For Inodes
+// [0] = size
+// [1] = type
+// [2 - 11] = data block pointers
+// if(directory)
+//		2 = datablock where child nodes are kept
+//		[2][0 - 128] = each int holds inode number of file in the directory
+// [12-27] = file name
+// [28] = Inode Number
+// [29] = Parent directory
+// -- Inode takes 30 ints, max of 100 inodes, so inodes need 300 ints 3 blocks
 
 void UMDLibFS()
 {
@@ -61,13 +77,7 @@ int UMDLibFS::FileUnlink(string file)
 
 int UMDLibFS::DirCreate(string path)
 {
-	string pathSplit[256];
-	//int splitResult = (SplitFilePath(pathSplit, path) -1);
-
-	//for (int i = 0; i < splitResult; i++)
-	{
-
-	}
+	int nodeNum = NavigateToDir(path);
 
 	return 0;
 }
@@ -188,4 +198,109 @@ int UMDLibFS::SplitFilePath(string splitPath[], string path)
 	}
 
 	return pathCounter;
+}
+
+int UMDLibFS::NavigateToDir(string path)
+{
+	string pathSplit[256];
+	int splitResult = (SplitFilePath(pathSplit, path) - 1);
+	int numNodes = splitResult - 1;
+
+	if (NumInodes < numNodes)
+	{
+		//Error
+	}
+
+	int nextInodeToSearch = 0;
+	int offset = 0;
+	int nodesFound = 0;
+	string nodeName;
+	bool foundNextNode = false;
+	int LastFoundAddr = 0;
+
+	//iterate through the items of the path
+	for (int i = 0; i < numNodes; i++)
+	{
+		//iterate through the inodes on the disk
+		for (int k = 3; k < 6; k++)
+		{
+			//iterate through all Inodes in that sector
+			for (int j = 0; j < 4; j++)
+			{
+				offset = (j * 30);
+
+				//If the Inode is the one we are looking for
+				if (WorkingDisk[k][offset + 28] == nextInodeToSearch)
+				{
+					nodesFound++;
+					LastFoundAddr = nextInodeToSearch;
+					
+					int dataBlockWPointers = WorkingDisk[k][offset + 2];
+					//Iterate through the data block that holds file pointers for that Inode
+					for (int h = 0; h < 128; h++)
+					{
+						if (WorkingDisk[dataBlockWPointers][h] != -1)
+						{
+							//If one of the Inode names matches the next node name
+							if (GetInodeName(WorkingDisk[dataBlockWPointers][h]) == pathSplit[i + 1])
+							{
+								nextInodeToSearch = WorkingDisk[dataBlockWPointers][h + 28];
+								foundNextNode = true;
+							}
+						}
+						else
+						{
+							break;
+						}
+						
+					}
+
+				}
+
+			}
+		}
+
+
+	}
+
+	if ((nodesFound -1) < numNodes)
+	{
+		//error
+	}
+
+	return 0;
+}
+
+string UMDLibFS::GetInodeName(int nodeNumber)
+{
+	int offset;
+	int nodeSector, nodeOffset;
+
+	//iterate through the inodes on the disk
+	for (int k = 3; k < 6; k++)
+	{
+		//iterate through all Inodes in that sector
+		for (int j = 0; j < 4; j++)
+		{
+			offset = (j * 30);
+
+			//If the Inode is the one we are looking for
+			if (WorkingDisk[k][offset + 28] == nodeNumber)
+			{
+				nodeSector = k;
+				nodeOffset = offset;
+			}
+		}
+	}
+
+	string nodeName = "";
+	for (int o = 0; o < 16; o++)
+	{
+		if (WorkingDisk[nodeSector][nodeOffset + 12 + o] != -1)
+		{
+			nodeName.append(1, (char)WorkingDisk[nodeSector][nodeOffset + 12 + o]);
+		}
+	}
+
+	return nodeName;
 }

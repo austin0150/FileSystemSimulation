@@ -13,25 +13,7 @@ public:
 	int MAX_FILES = 100;
 	int SUPERBLOCK_NUMBER = 15;
 	string osErrMsg;
-
-	//[0 - 128] SuperBlock (put the magic number in index 0)
-	//[129 - 256] reserved for Inode Bitmap (Use InodeMap)
-	//[257 - 384] reserved for datablock bitmap (Use DataBlockMap)
-	//[385 - 768] reserved for Inodes (385 - 415) is root Inode
-	int WorkingDisk[1000][128];
-	int ExternalDisk[1000][128];
-
-	//For Inodes
-	// [0] = size
-	// [1] = type
-	// [2 - 11] = data block pointers
-	// if(directory)
-	//		2 = datablock where child nodes are kept
-	//		[2][0 - 999] = each int holds inode number of file in the directory
-	// [12-27] = file name
-	// [28] = Inode Number
-	// [29] = Parent directory
-	// -- Inode takes 30 ints, max of 100 inodes, so inodes need 300 ints 3 blocks
+	int NumInodes = 0;
 
 	bool InodeMap[100];
 	bool DataBlockMap[996];
@@ -62,5 +44,7 @@ public:
 	int DirUnlink(string path);
 
 	int SplitFilePath(string splitPath[], string path);
+	int NavigateToDir(string path);
+	string GetInodeName(int nodeNumber);
 };
 
