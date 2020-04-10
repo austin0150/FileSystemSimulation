@@ -25,6 +25,40 @@ void UMDLibFS()
 	
 }
 
+void UMDLibFS::INIT()
+{
+	for (int i = 0; i < 1000; i++)
+	{
+		for (int j = 0; j < 512; j++)
+		{
+			WorkingDisk[i][j] = -1;
+		}
+	}
+
+	for (int i = 0; i < 910; i++)
+	{
+		DataBlockMap[i] = false;
+	}
+	for (int i = 0; i < 6; i++)
+	{
+		for (int j = 0; j < 17; j++)
+		{
+			InodeMap[i][j] = false;
+		}
+	}
+	
+	//Add root dir
+	NumInodes++;
+	InodeMap[0][0] = true;
+	WorkingDisk[3][0] = 0;
+	WorkingDisk[3][1] = 0;
+	WorkingDisk[3][2] = 10;
+	DataBlockMap[10] = true;
+	WorkingDisk[3][12] = '/';
+	WorkingDisk[3][28] = 0;
+	WorkingDisk[3][29] = 0;
+}
+
 int UMDLibFS::FSBoot()
 {
 	return 0;
@@ -78,13 +112,19 @@ int UMDLibFS::FileUnlink(string file)
 int UMDLibFS::DirCreate(string path)
 {
 	int nodeNum = NavigateToDir(path);
+	if (nodeNum == -1)
+	{
+		return -1;
+	}
+
 	int offset;
 	int nodeSector;
 	int nodeOffset;
 
 	string splitPath[256];
-	int lastNode = SplitFilePath(splitPath, path);
+	int lastNode = SplitFilePath(splitPath, path) - 1;
 	string nodeName = splitPath[lastNode];
+	int nameLength = nodeName.length();
 
 	//Get the offset of the parent directory
 	for (int i = 3; i < 9; i++)
@@ -112,6 +152,10 @@ int UMDLibFS::DirCreate(string path)
 				InodeMap[i][j] = true;
 				newNodeSector = i + 3;
 				newNodeOffset = j * 30;
+				
+				//End the loop
+				i = 6;
+				j = 47;
 			}
 		}
 	}
@@ -127,6 +171,7 @@ int UMDLibFS::DirCreate(string path)
 			break;
 		}
 	}
+	WorkingDisk[nodeSector][nodeOffset] ++; //Update directory size
 
 	//determine block to hold pointers to directory children
 	int blockPointerSector = 0;
@@ -136,6 +181,7 @@ int UMDLibFS::DirCreate(string path)
 		{
 			DataBlockMap[i] = true;
 			blockPointerSector = i;
+			break;
 		}
 	}
 
@@ -143,9 +189,9 @@ int UMDLibFS::DirCreate(string path)
 	WorkingDisk[newNodeSector][newNodeOffset] = 0; //node size
 	WorkingDisk[newNodeSector][newNodeOffset + 1] = 0; // node type
 	WorkingDisk[newNodeSector][newNodeOffset + 2] = blockPointerSector; //sector with pointer to child nodes
-	for (int i = 12; i < 27; i++) //node name
+	for (int i = 0; i < nameLength; i++) //node name
 	{
-		WorkingDisk[newNodeSector][newNodeOffset + i] = nodeName[i - 12];
+		WorkingDisk[newNodeSector][newNodeOffset + i + 12] = nodeName[i];
 	}
 	WorkingDisk[newNodeSector][newNodeOffset + 28] = NumInodes - 1; //NodeNumber
 	WorkingDisk[newNodeSector][newNodeOffset + 29] = WorkingDisk[nodeSector][nodeOffset + 28]; //node parent
@@ -274,7 +320,7 @@ int UMDLibFS::NavigateToDir(string path)
 {
 	string pathSplit[256];
 	int splitResult = (SplitFilePath(pathSplit, path) - 1);
-	int numNodes = splitResult - 1;
+	int numNodes = splitResult;
 
 	if (NumInodes < numNodes)
 	{
@@ -313,9 +359,9 @@ int UMDLibFS::NavigateToDir(string path)
 						if (WorkingDisk[dataBlockWPointers][h] != -1)
 						{
 							//If one of the Inode names matches the next node name
-							if (GetInodeName(WorkingDisk[dataBlockWPointers][h]) == pathSplit[i + 1])
+							if (GetInodeName(WorkingDisk[dataBlockWPointers][h]) == pathSplit[i])
 							{
-								nextInodeToSearch = WorkingDisk[dataBlockWPointers][h + 28];
+								nextInodeToSearch = WorkingDisk[dataBlockWPointers][h];
 								foundNextNode = true;
 							}
 						}
@@ -333,7 +379,7 @@ int UMDLibFS::NavigateToDir(string path)
 
 	}
 
-	if ((nodesFound -1) < numNodes)
+	if ((nodesFound) < numNodes)
 	{
 		osErrMsg = "E_DIR_CREATE";
 		return -1;

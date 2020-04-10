@@ -4,9 +4,16 @@
 int main()
 {
 	UMDLibFS lib;
-	string path = "/CIS450/prog3/UMDLibFS.cpp";
-	string arr[256];
 
-	int result = lib.SplitFilePath(arr, path);
+	lib.INIT();
+	//string path = "/CIS450/prog3/UMDLibFS.cpp";
+	string path = "/Test/";
+
+	//int result = lib.SplitFilePath(arr, path);
+	int result = lib.DirCreate(path);
+
+	path = "/Test/SubTest/";
+	result = lib.DirCreate(path);
+
 	return result;
 }

@@ -46,5 +46,6 @@ public:
 	int SplitFilePath(string splitPath[], string path);
 	int NavigateToDir(string path);
 	string GetInodeName(int nodeNumber);
+	void INIT();
 };
 
