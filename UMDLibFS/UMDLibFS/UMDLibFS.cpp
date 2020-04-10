@@ -4,9 +4,9 @@
 //[0][] SuperBlock (put the magic number in index 0)
 	//[1][] reserved for Inode Bitmap (Use InodeMap)
 	//[2][] reserved for datablock bitmap (Use DataBlockMap)
-	//[3 - 5][] reserved for Inodes ([3][0-29]) is root Inode
-static int WorkingDisk[1000][128];
-static int ExternalDisk[1000][128];
+	//[3 - 8][] reserved for Inodes ([3][0-29]) is root Inode
+static int WorkingDisk[1000][512];
+static int ExternalDisk[1000][512];
 
 //For Inodes
 // [0] = size
@@ -78,6 +78,24 @@ int UMDLibFS::FileUnlink(string file)
 int UMDLibFS::DirCreate(string path)
 {
 	int nodeNum = NavigateToDir(path);
+	int offset;
+	int nodeSector;
+	int nodeOffset;
+
+
+	for (int i = 3; i < 9; i++)
+	{
+		for (int j = 0; j < 17; j++)
+		{
+			offset = j * 30;
+			if (WorkingDisk[i][offset + 28] == nodeNum)
+			{
+				nodeSector = i;
+				nodeOffset = offset;
+			}
+		}
+	}
+
 
 	return 0;
 }
@@ -111,7 +129,7 @@ int UMDLibFS::DiskSave()
 {
 	for (int i = 0; i <1000; i++)
 	{
-		for (int j = 0; j < 128; j++)
+		for (int j = 0; j < 512; j++)
 		{
 			ExternalDisk[i][j] = WorkingDisk[i][j];
 		}
@@ -133,7 +151,7 @@ int UMDLibFS::DiskWrite(int sector, string buffer)
 		return -1;
 	}
 
-	for (int i = 0; i < 128; i++)
+	for (int i = 0; i < 512; i++)
 	{
 		WorkingDisk[sector][i] = buffer[i];
 	}
@@ -154,7 +172,7 @@ int UMDLibFS::DiskRead(int sector, string buffer)
 		return -1;
 	}
 
-	for (int i = 0; i < 128; i++)
+	for (int i = 0; i < 512; i++)
 	{
 		buffer[i] = WorkingDisk[sector][i];
 	}
@@ -208,7 +226,8 @@ int UMDLibFS::NavigateToDir(string path)
 
 	if (NumInodes < numNodes)
 	{
-		//Error
+		osErrMsg = "E_DIR_CREATE";
+		return -1;
 	}
 
 	int nextInodeToSearch = 0;
@@ -222,10 +241,10 @@ int UMDLibFS::NavigateToDir(string path)
 	for (int i = 0; i < numNodes; i++)
 	{
 		//iterate through the inodes on the disk
-		for (int k = 3; k < 6; k++)
+		for (int k = 3; k < 9; k++)
 		{
 			//iterate through all Inodes in that sector
-			for (int j = 0; j < 4; j++)
+			for (int j = 0; j < 17; j++)
 			{
 				offset = (j * 30);
 
@@ -237,7 +256,7 @@ int UMDLibFS::NavigateToDir(string path)
 					
 					int dataBlockWPointers = WorkingDisk[k][offset + 2];
 					//Iterate through the data block that holds file pointers for that Inode
-					for (int h = 0; h < 128; h++)
+					for (int h = 0; h < 512; h++)
 					{
 						if (WorkingDisk[dataBlockWPointers][h] != -1)
 						{
@@ -260,15 +279,15 @@ int UMDLibFS::NavigateToDir(string path)
 			}
 		}
 
-
 	}
 
 	if ((nodesFound -1) < numNodes)
 	{
-		//error
+		osErrMsg = "E_DIR_CREATE";
+		return -1;
 	}
 
-	return 0;
+	return LastFoundAddr;
 }
 
 string UMDLibFS::GetInodeName(int nodeNumber)
@@ -277,10 +296,10 @@ string UMDLibFS::GetInodeName(int nodeNumber)
 	int nodeSector, nodeOffset;
 
 	//iterate through the inodes on the disk
-	for (int k = 3; k < 6; k++)
+	for (int k = 3; k < 9; k++)
 	{
 		//iterate through all Inodes in that sector
-		for (int j = 0; j < 4; j++)
+		for (int j = 0; j < 17; j++)
 		{
 			offset = (j * 30);
 
