@@ -10,11 +10,11 @@ static int ExternalDisk[1000][512];
 
 //For Inodes
 // [0] = size
-// [1] = type
+// [1] = type (0 = directory, 1 = file)
 // [2 - 11] = data block pointers
 // if(directory)
 //		2 = datablock where child nodes are kept
-//		[2][0 - 128] = each int holds inode number of file in the directory
+//		[2][0 - 512] = each int holds inode number of file in the directory
 // [12-27] = file name
 // [28] = Inode Number
 // [29] = Parent directory
@@ -82,7 +82,11 @@ int UMDLibFS::DirCreate(string path)
 	int nodeSector;
 	int nodeOffset;
 
+	string splitPath[256];
+	int lastNode = SplitFilePath(splitPath, path);
+	string nodeName = splitPath[lastNode];
 
+	//Get the offset of the parent directory
 	for (int i = 3; i < 9; i++)
 	{
 		for (int j = 0; j < 17; j++)
@@ -96,6 +100,55 @@ int UMDLibFS::DirCreate(string path)
 		}
 	}
 
+	//Get the location for the new Inode
+	int newNodeSector;
+	int newNodeOffset;
+	for (int i = 0; i < 6; i++)
+	{
+		for (int j = 0; j < 17; j++)
+		{
+			if (InodeMap[i][j] == false)
+			{
+				InodeMap[i][j] = true;
+				newNodeSector = i + 3;
+				newNodeOffset = j * 30;
+			}
+		}
+	}
+
+	//Add new Inode to parent directory
+	int nodeWPointers = WorkingDisk[nodeSector][nodeOffset + 2];
+	for (int i = 0; i < 512; i++)
+	{
+		if (WorkingDisk[nodeWPointers][i] == -1)
+		{
+			WorkingDisk[nodeWPointers][i] = NumInodes;
+			NumInodes++;
+			break;
+		}
+	}
+
+	//determine block to hold pointers to directory children
+	int blockPointerSector = 0;
+	for (int i = 10; i < 990; i++)
+	{
+		if (DataBlockMap[i] == false)
+		{
+			DataBlockMap[i] = true;
+			blockPointerSector = i;
+		}
+	}
+
+	//Creat the new Inode on the disk
+	WorkingDisk[newNodeSector][newNodeOffset] = 0; //node size
+	WorkingDisk[newNodeSector][newNodeOffset + 1] = 0; // node type
+	WorkingDisk[newNodeSector][newNodeOffset + 2] = blockPointerSector; //sector with pointer to child nodes
+	for (int i = 12; i < 27; i++) //node name
+	{
+		WorkingDisk[newNodeSector][newNodeOffset + i] = nodeName[i - 12];
+	}
+	WorkingDisk[newNodeSector][newNodeOffset + 28] = NumInodes - 1; //NodeNumber
+	WorkingDisk[newNodeSector][newNodeOffset + 29] = WorkingDisk[nodeSector][nodeOffset + 28]; //node parent
 
 	return 0;
 }
@@ -133,7 +186,6 @@ int UMDLibFS::DiskSave()
 		{
 			ExternalDisk[i][j] = WorkingDisk[i][j];
 		}
-		
 	}
 	return 0;
 }

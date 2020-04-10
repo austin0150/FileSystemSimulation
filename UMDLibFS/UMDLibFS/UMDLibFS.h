@@ -15,8 +15,8 @@ public:
 	string osErrMsg;
 	int NumInodes = 0;
 
-	bool InodeMap[100];
-	bool DataBlockMap[996];
+	bool InodeMap[6][17];
+	bool DataBlockMap[990];
 
 	string OpenFileTable[10];
 	
