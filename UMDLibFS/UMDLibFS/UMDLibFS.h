@@ -18,8 +18,8 @@ public:
 	//[129 - 256] reserved for Inode Bitmap (Use InodeMap)
 	//[257 - 384] reserved for datablock bitmap (Use DataBlockMap)
 	//[385 - 768] reserved for Inodes (385 - 415) is root Inode
-	int WorkingDisk[128000];
-	int ExternalDisk[128000];
+	int WorkingDisk[1000][128];
+	int ExternalDisk[1000][128];
 
 	//For Inodes
 	// [0] = size
@@ -33,8 +33,8 @@ public:
 	// [29] = Parent directory
 	// -- Inode takes 30 ints, max of 100 inodes, so inodes need 300 ints 3 blocks
 
-	bool InodeMap[4000];
-	bool DataBlockMap[4096];
+	bool InodeMap[100];
+	bool DataBlockMap[996];
 
 	string OpenFileTable[10];
 	

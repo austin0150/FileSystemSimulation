@@ -62,9 +62,9 @@ int UMDLibFS::FileUnlink(string file)
 int UMDLibFS::DirCreate(string path)
 {
 	string pathSplit[256];
-	int splitResult = (SplitFilePath(pathSplit, path) -1);
+	//int splitResult = (SplitFilePath(pathSplit, path) -1);
 
-	for (int i = 0; i < splitResult; i++)
+	//for (int i = 0; i < splitResult; i++)
 	{
 
 	}
@@ -99,10 +99,13 @@ int UMDLibFS::DiskLoad()
 
 int UMDLibFS::DiskSave()
 {
-	int length = sizeof(WorkingDisk) / sizeof(*WorkingDisk);
-	for (int i = 0; i < length; i++)
+	for (int i = 0; i <1000; i++)
 	{
-		ExternalDisk[i] = WorkingDisk[i];
+		for (int j = 0; j < 128; j++)
+		{
+			ExternalDisk[i][j] = WorkingDisk[i][j];
+		}
+		
 	}
 	return 0;
 }
@@ -120,12 +123,9 @@ int UMDLibFS::DiskWrite(int sector, string buffer)
 		return -1;
 	}
 
-	int offsetIndex = sector * 1000;
-
-	int length = sizeof(WorkingDisk) / sizeof(*WorkingDisk);
-	for (int i = 0; i < length; i++)
+	for (int i = 0; i < 128; i++)
 	{
-		WorkingDisk[i + offsetIndex] = buffer[i];
+		WorkingDisk[sector][i] = buffer[i];
 	}
 
 	return 0;
@@ -144,17 +144,15 @@ int UMDLibFS::DiskRead(int sector, string buffer)
 		return -1;
 	}
 
-	int offsetIndex = sector * 1000;
-	int length = sizeof(WorkingDisk) / sizeof(*WorkingDisk);
-	for (int i = 0; i < length; i++)
+	for (int i = 0; i < 128; i++)
 	{
-		buffer[i] = WorkingDisk[i + offsetIndex];
+		buffer[i] = WorkingDisk[sector][i];
 	}
 
 	return 0;
 }
 
-int UMDLibFS::SplitFilePath(string splitPath[256], string path)
+int UMDLibFS::SplitFilePath(string splitPath[], string path)
 {
 	int startName = 0;
 	//int endName = 0;
