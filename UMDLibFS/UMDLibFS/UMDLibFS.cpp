@@ -66,6 +66,15 @@ int UMDLibFS::FSBoot()
 
 int UMDLibFS::FSSync()
 {
+	for (int i = 0; i < 1000; i++)
+	{
+		for (int j = 0; j < 512; j++)
+
+		{
+			ExternalDisk[i][j] = WorkingDisk[i][j];
+		}
+	}
+
 	return 0;
 }
 
@@ -216,11 +225,24 @@ int UMDLibFS::DirUnlink(string path)
 
 int UMDLibFS::DiskInit()
 {
+	for (int i = 0; i < 512; i++)
+	{
+		WorkingDisk[sector][i] = 0;
+	}
+	
 	return 0;
 }
 
 int UMDLibFS::DiskLoad()
 {
+	for (int i = 0; i <1000; i++)
+	{
+		for (int j = 0; j < 512; j++)
+		{
+			WorkingDisk[i][j] = ExternalDisk[i][j];
+		}
+	}
+	
 	return 0;
 }
 
