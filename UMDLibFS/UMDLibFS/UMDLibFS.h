@@ -8,19 +8,15 @@ class UMDLibFS
 {
 public:
 	bool FileSystemUnavailible;
-	int NUM_SECTORS = 512;
-	int SECTOR_SIZE = 1000;
+	int NUM_SECTORS = 1000;
+	int SECTOR_SIZE = 128;
 	int MAX_FILES = 100;
 	int SUPERBLOCK_NUMBER = 15;
+	string osErrMsg;
+	int NumInodes = 0;
 
-	//[0 - 999] SuperBlock (put the magic number in index 0)
-	//[1000 - 1999] reserved for Inode Bitmap (Use InodeMap)
-	//[2000 - 2999] reserved for datablock bitmap (Use DataBlockMap)
-	int WorkingDisk[512000];
-	int ExternalDisk[512000];
-
-	bool InodeMap[4000];
-	bool DataBlockMap[4096];
+	bool InodeMap[6][17];
+	bool DataBlockMap[990];
 
 	string OpenFileTable[10];
 	
@@ -46,5 +42,10 @@ public:
 	int DirSize(string path);
 	int DirRead(string path, string buffer, int size);
 	int DirUnlink(string path);
+
+	int SplitFilePath(string splitPath[], string path);
+	int NavigateToDir(string path);
+	string GetInodeName(int nodeNumber);
+	void INIT();
 };
 

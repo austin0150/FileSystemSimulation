@@ -21,18 +21,12 @@
     <ClCompile Include="UMDLibFS.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Inode.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Logging.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="UMDLibFS.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Inode.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Logging.h">

@@ -147,13 +147,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Inode.cpp" />
     <ClCompile Include="Logging.cpp" />
     <ClCompile Include="Program.cpp" />
     <ClCompile Include="UMDLibFS.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Inode.h" />
     <ClInclude Include="Logging.h" />
     <ClInclude Include="UMDLibFS.h" />
   </ItemGroup>
