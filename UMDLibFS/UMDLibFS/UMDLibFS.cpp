@@ -223,7 +223,7 @@ int UMDLibFS::DirSize(string path)
 	return 0;
 }
 
-int UMDLibFS::DirRead(string path, string buffer, int size)
+int UMDLibFS::DirRead(string path, string &buffer, int size)
 {
 	int LastInodeParent = NavigateToDir(path);
 
@@ -260,9 +260,13 @@ int UMDLibFS::DirRead(string path, string buffer, int size)
 				string nodeName = GetInodeName(WorkingDisk[SectorWBlockPointers][i]);
 				for (int j = 0; j < 16; j++)
 				{
-					buffer[(numChildren * 17) + j] = nodeName[j];
+					if (j < nodeName.length())
+					{
+						buffer.append(1, nodeName[j]);
+					}
+
 				}
-				buffer[(numChildren * 17) + 16] = WorkingDisk[SectorWBlockPointers][i];
+				buffer.append(1,(char)WorkingDisk[SectorWBlockPointers][i]);
 			}
 			else
 			{

@@ -40,7 +40,7 @@ public:
 
 	int DirCreate(string path);
 	int DirSize(string path);
-	int DirRead(string path, string buffer, int size);
+	int DirRead(string path, string &buffer, int size);
 	int DirUnlink(string path);
 
 	int SplitFilePath(string splitPath[], string path);
