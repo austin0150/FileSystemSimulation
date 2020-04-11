@@ -111,6 +111,12 @@ int UMDLibFS::FileUnlink(string file)
 
 int UMDLibFS::DirCreate(string path)
 {
+	if (FileSystemUnavailible)
+	{
+		osErrMsg = "E_INVALID_ACCESS_ATTEMPT";
+		return -1;
+	}
+
 	int nodeNum = NavigateToDir(path);
 	if (nodeNum == -1)
 	{
@@ -205,6 +211,11 @@ int UMDLibFS::DirCreate(string path)
 
 int UMDLibFS::DirSize(string path)
 {
+	if (FileSystemUnavailible)
+	{
+		osErrMsg = "E_INVALID_ACCESS_ATTEMPT";
+		return -1;
+	}
 	int result = NavigateToDir(path);
 	int offset;
 
@@ -229,6 +240,11 @@ int UMDLibFS::DirSize(string path)
 
 int UMDLibFS::DirRead(string path, string &buffer, int size)
 {
+	if (FileSystemUnavailible)
+	{
+		osErrMsg = "E_INVALID_ACCESS_ATTEMPT";
+		return -1;
+	}
 	int LastInodeParent = NavigateToDir(path);
 
 	string splitPath[256];
@@ -306,6 +322,11 @@ int UMDLibFS::DiskLoad()
 
 int UMDLibFS::DiskSave()
 {
+	if (FileSystemUnavailible)
+	{
+		osErrMsg = "E_INVALID_ACCESS_ATTEMPT";
+		return -1;
+	}
 	for (int i = 0; i <1000; i++)
 	{
 		for (int j = 0; j < 512; j++)
@@ -318,6 +339,11 @@ int UMDLibFS::DiskSave()
 
 int UMDLibFS::DiskWrite(int sector, string buffer)
 {
+	if (FileSystemUnavailible)
+	{
+		osErrMsg = "E_INVALID_ACCESS_ATTEMPT";
+		return -1;
+	}
 	if (sector < 0 || (sector >= NUM_SECTORS))
 	{
 		osErrMsg = "E_WRITE_INVALID_PARAM";
@@ -339,6 +365,11 @@ int UMDLibFS::DiskWrite(int sector, string buffer)
 
 int UMDLibFS::DiskRead(int sector, string buffer)
 {
+	if (FileSystemUnavailible)
+	{
+		osErrMsg = "E_INVALID_ACCESS_ATTEMPT";
+		return -1;
+	}
 	if (sector < 0 || (sector >= NUM_SECTORS))
 	{
 		osErrMsg = "E_READ_INVALID_PARAM";
