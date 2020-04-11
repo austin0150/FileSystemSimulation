@@ -59,8 +59,11 @@ void UMDLibFS::INIT()
 	WorkingDisk[3][29] = 0;
 }
 
-int UMDLibFS::FSBoot()
+int UMDLibFS::FSBoot()  //in progress
 {
+	if (ExternalDisk == false)
+	{
+		
 	return 0;
 }
 
@@ -80,7 +83,19 @@ int UMDLibFS::FSSync()
 
 int UMDLibFS::FSReset()
 {
-	return 0;
+	FSSync();
+	UMDLibFS.close();
+	
+	if (FSBoot() == true) 
+	{
+		UMDLibFS.open();	
+		return 0;
+	}
+	
+	else
+	{
+		return -1;
+	}
 }
 
 int UMDLibFS::FileCreate(string file)
