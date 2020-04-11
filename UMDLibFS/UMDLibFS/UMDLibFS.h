@@ -9,7 +9,7 @@ class UMDLibFS
 public:
 	bool FileSystemUnavailible;
 	int NUM_SECTORS = 1000;
-	int SECTOR_SIZE = 128;
+	int SECTOR_SIZE = 512;
 	int MAX_FILES = 100;
 	int SUPERBLOCK_NUMBER = 15;
 	string osErrMsg;

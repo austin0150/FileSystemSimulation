@@ -31,7 +31,7 @@ void UMDLibFS::INIT()
 	{
 		for (int j = 0; j < 512; j++)
 		{
-			WorkingDisk[i][j] = -1;
+			WorkingDisk[i][j] = 0;
 		}
 	}
 
@@ -136,6 +136,10 @@ int UMDLibFS::DirCreate(string path)
 			{
 				nodeSector = i;
 				nodeOffset = offset;
+
+				//break the loop
+				i = 10;
+				j = 20;
 			}
 		}
 	}
@@ -164,7 +168,7 @@ int UMDLibFS::DirCreate(string path)
 	int nodeWPointers = WorkingDisk[nodeSector][nodeOffset + 2];
 	for (int i = 0; i < 512; i++)
 	{
-		if (WorkingDisk[nodeWPointers][i] == -1)
+		if (WorkingDisk[nodeWPointers][i] == 0)
 		{
 			WorkingDisk[nodeWPointers][i] = NumInodes;
 			NumInodes++;
@@ -252,7 +256,7 @@ int UMDLibFS::DirRead(string path, string &buffer, int size)
 	int numChildren = 0;
 	for (int i = 0; i < 512; i++)
 	{
-		if (WorkingDisk[SectorWBlockPointers][i] != -1)
+		if (WorkingDisk[SectorWBlockPointers][i] != 0)
 		{
 			if (((numChildren+1) * 17) < size)
 			{
@@ -432,7 +436,7 @@ int UMDLibFS::NavigateToDir(string path)
 					//Iterate through the data block that holds file pointers for that Inode
 					for (int h = 0; h < 512; h++)
 					{
-						if (WorkingDisk[dataBlockWPointers][h] != -1)
+						if (WorkingDisk[dataBlockWPointers][h] != 0)
 						{
 							//If one of the Inode names matches the next node name
 							if (GetInodeName(WorkingDisk[dataBlockWPointers][h]) == pathSplit[i])
@@ -489,7 +493,7 @@ string UMDLibFS::GetInodeName(int nodeNumber)
 	string nodeName = "";
 	for (int o = 0; o < 16; o++)
 	{
-		if (WorkingDisk[nodeSector][nodeOffset + 12 + o] != -1)
+		if (WorkingDisk[nodeSector][nodeOffset + 12 + o] != 0)
 		{
 			nodeName.append(1, (char)WorkingDisk[nodeSector][nodeOffset + 12 + o]);
 		}
