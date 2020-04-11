@@ -201,11 +201,83 @@ int UMDLibFS::DirCreate(string path)
 
 int UMDLibFS::DirSize(string path)
 {
+	int result = NavigateToDir(path);
+	int offset;
+
+	string splitPath[256];
+	int lastNode = SplitFilePath(splitPath, path) - 1;
+	string nodeName = splitPath[lastNode];
+
+	for (int i = 0; i < 6; i++)
+	{
+		for (int j = 0; j < 17; j++)
+		{
+			offset = j * 30;
+			if (GetInodeName(WorkingDisk[i][offset + 28]) == nodeName)
+			{
+				return WorkingDisk[i][offset];
+			}
+		}
+	}
+
 	return 0;
 }
 
 int UMDLibFS::DirRead(string path, string buffer, int size)
 {
+	int LastInodeParent = NavigateToDir(path);
+
+	string splitPath[256];
+	int lastNode = SplitFilePath(splitPath, path) - 1;
+	string nodeName = splitPath[lastNode];
+
+	int dirSector;
+	int dirOffset;
+	int offset;
+	for (int i = 0; i < 6; i++)
+	{
+		for (int j = 0; j < 17; j++)
+		{
+			offset = j * 30;
+			if (GetInodeName(WorkingDisk[i][offset + 28]) == nodeName)
+			{
+				dirSector = i;
+				dirOffset = offset;
+			}
+		}
+	}
+
+	int SectorWBlockPointers = WorkingDisk[dirSector][dirOffset + 2];
+
+	int numChildren = 0;
+	for (int i = 0; i < 512; i++)
+	{
+		if (WorkingDisk[SectorWBlockPointers][i] != -1)
+		{
+			if (((numChildren+1) * 17) < size)
+			{
+				numChildren++;
+				string nodeName = GetInodeName(WorkingDisk[SectorWBlockPointers][i]);
+				for (int j = 0; j < 16; j++)
+				{
+					buffer[(numChildren * 17) + j] = nodeName[j];
+				}
+				buffer[(numChildren * 17) + 16] = WorkingDisk[SectorWBlockPointers][i];
+			}
+			else
+			{
+				osErrMsg = "E_BUFFER_TOO_SMALL";
+				return -1;
+			}
+			
+
+		}
+		else
+		{
+			break;
+		}
+	}
+
 	return 0;
 }
 
