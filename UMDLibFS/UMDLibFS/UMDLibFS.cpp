@@ -31,7 +31,7 @@ void UMDLibFS::INIT()
 	{
 		for (int j = 0; j < 512; j++)
 		{
-			WorkingDisk[i][j] = -1;
+			WorkingDisk[i][j] = 0;
 		}
 	}
 
@@ -111,6 +111,12 @@ int UMDLibFS::FileUnlink(string file)
 
 int UMDLibFS::DirCreate(string path)
 {
+	if (FileSystemUnavailible)
+	{
+		osErrMsg = "E_INVALID_ACCESS_ATTEMPT";
+		return -1;
+	}
+
 	int nodeNum = NavigateToDir(path);
 	if (nodeNum == -1)
 	{
@@ -136,6 +142,10 @@ int UMDLibFS::DirCreate(string path)
 			{
 				nodeSector = i;
 				nodeOffset = offset;
+
+				//break the loop
+				i = 10;
+				j = 20;
 			}
 		}
 	}
@@ -164,7 +174,7 @@ int UMDLibFS::DirCreate(string path)
 	int nodeWPointers = WorkingDisk[nodeSector][nodeOffset + 2];
 	for (int i = 0; i < 512; i++)
 	{
-		if (WorkingDisk[nodeWPointers][i] == -1)
+		if (WorkingDisk[nodeWPointers][i] == 0)
 		{
 			WorkingDisk[nodeWPointers][i] = NumInodes;
 			NumInodes++;
@@ -201,11 +211,97 @@ int UMDLibFS::DirCreate(string path)
 
 int UMDLibFS::DirSize(string path)
 {
+	if (FileSystemUnavailible)
+	{
+		osErrMsg = "E_INVALID_ACCESS_ATTEMPT";
+		return -1;
+	}
+	int result = NavigateToDir(path);
+	int offset;
+
+	string splitPath[256];
+	int lastNode = SplitFilePath(splitPath, path) - 1;
+	string nodeName = splitPath[lastNode];
+
+	for (int i = 0; i < 6; i++)
+	{
+		for (int j = 0; j < 17; j++)
+		{
+			offset = j * 30;
+			if (GetInodeName(WorkingDisk[i][offset + 28]) == nodeName)
+			{
+				return WorkingDisk[i][offset];
+			}
+		}
+	}
+
 	return 0;
 }
 
-int UMDLibFS::DirRead(string path, string buffer, int size)
+int UMDLibFS::DirRead(string path, string &buffer, int size)
 {
+	if (FileSystemUnavailible)
+	{
+		osErrMsg = "E_INVALID_ACCESS_ATTEMPT";
+		return -1;
+	}
+	int LastInodeParent = NavigateToDir(path);
+
+	string splitPath[256];
+	int lastNode = SplitFilePath(splitPath, path) - 1;
+	string nodeName = splitPath[lastNode];
+
+	int dirSector;
+	int dirOffset;
+	int offset;
+	for (int i = 0; i < 6; i++)
+	{
+		for (int j = 0; j < 17; j++)
+		{
+			offset = j * 30;
+			if (GetInodeName(WorkingDisk[i][offset + 28]) == nodeName)
+			{
+				dirSector = i;
+				dirOffset = offset;
+			}
+		}
+	}
+
+	int SectorWBlockPointers = WorkingDisk[dirSector][dirOffset + 2];
+
+	int numChildren = 0;
+	for (int i = 0; i < 512; i++)
+	{
+		if (WorkingDisk[SectorWBlockPointers][i] != 0)
+		{
+			if (((numChildren+1) * 17) < size)
+			{
+				numChildren++;
+				string nodeName = GetInodeName(WorkingDisk[SectorWBlockPointers][i]);
+				for (int j = 0; j < 16; j++)
+				{
+					if (j < nodeName.length())
+					{
+						buffer.append(1, nodeName[j]);
+					}
+
+				}
+				buffer.append(1,(char)WorkingDisk[SectorWBlockPointers][i]);
+			}
+			else
+			{
+				osErrMsg = "E_BUFFER_TOO_SMALL";
+				return -1;
+			}
+			
+
+		}
+		else
+		{
+			break;
+		}
+	}
+
 	return 0;
 }
 
@@ -226,6 +322,11 @@ int UMDLibFS::DiskLoad()
 
 int UMDLibFS::DiskSave()
 {
+	if (FileSystemUnavailible)
+	{
+		osErrMsg = "E_INVALID_ACCESS_ATTEMPT";
+		return -1;
+	}
 	for (int i = 0; i <1000; i++)
 	{
 		for (int j = 0; j < 512; j++)
@@ -238,6 +339,11 @@ int UMDLibFS::DiskSave()
 
 int UMDLibFS::DiskWrite(int sector, string buffer)
 {
+	if (FileSystemUnavailible)
+	{
+		osErrMsg = "E_INVALID_ACCESS_ATTEMPT";
+		return -1;
+	}
 	if (sector < 0 || (sector >= NUM_SECTORS))
 	{
 		osErrMsg = "E_WRITE_INVALID_PARAM";
@@ -259,6 +365,11 @@ int UMDLibFS::DiskWrite(int sector, string buffer)
 
 int UMDLibFS::DiskRead(int sector, string buffer)
 {
+	if (FileSystemUnavailible)
+	{
+		osErrMsg = "E_INVALID_ACCESS_ATTEMPT";
+		return -1;
+	}
 	if (sector < 0 || (sector >= NUM_SECTORS))
 	{
 		osErrMsg = "E_READ_INVALID_PARAM";
@@ -356,7 +467,7 @@ int UMDLibFS::NavigateToDir(string path)
 					//Iterate through the data block that holds file pointers for that Inode
 					for (int h = 0; h < 512; h++)
 					{
-						if (WorkingDisk[dataBlockWPointers][h] != -1)
+						if (WorkingDisk[dataBlockWPointers][h] != 0)
 						{
 							//If one of the Inode names matches the next node name
 							if (GetInodeName(WorkingDisk[dataBlockWPointers][h]) == pathSplit[i])
@@ -413,7 +524,7 @@ string UMDLibFS::GetInodeName(int nodeNumber)
 	string nodeName = "";
 	for (int o = 0; o < 16; o++)
 	{
-		if (WorkingDisk[nodeSector][nodeOffset + 12 + o] != -1)
+		if (WorkingDisk[nodeSector][nodeOffset + 12 + o] != 0)
 		{
 			nodeName.append(1, (char)WorkingDisk[nodeSector][nodeOffset + 12 + o]);
 		}

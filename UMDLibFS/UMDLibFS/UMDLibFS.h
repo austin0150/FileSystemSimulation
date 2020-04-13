@@ -9,7 +9,7 @@ class UMDLibFS
 public:
 	bool FileSystemUnavailible;
 	int NUM_SECTORS = 1000;
-	int SECTOR_SIZE = 128;
+	int SECTOR_SIZE = 512;
 	int MAX_FILES = 100;
 	int SUPERBLOCK_NUMBER = 15;
 	string osErrMsg;
@@ -40,7 +40,7 @@ public:
 
 	int DirCreate(string path);
 	int DirSize(string path);
-	int DirRead(string path, string buffer, int size);
+	int DirRead(string path, string &buffer, int size);
 	int DirUnlink(string path);
 
 	int SplitFilePath(string splitPath[], string path);
