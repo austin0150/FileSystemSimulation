@@ -59,16 +59,42 @@ void UMDLibFS::INIT()
 	WorkingDisk[3][29] = 0;
 }
 
-int UMDLibFS::FSBoot()  //in progress
+int UMDLibFS::FSBoot()
 {
-	if (ExternalDisk == false)
+	if (ExternalDisk == NULL)
 	{
-		
-	return 0;
+		ExternalDisk = DiskImage;
+	}
+	
+	for (int i = 0; i < 1000; i++)
+	{
+		for (int j = 0; j < 512; j++)
+
+		{
+			ExternalDisk[i][j] = WorkingDisk[i][j];
+		}
+	}
+	
+	if (WorkingDisk.GetSuperBlock != CorrectSuperBlock) //need to fix this line
+	{
+	   	 osErrMsg = "E_FILE_BOOT";
+		 return -1;
+	}
+
+	else
+	{
+		return 0;
+	}
 }
 
 int UMDLibFS::FSSync()
 {
+	if (UMDLibFS == NULL) // if file system is unavailable
+	{
+		osErrMsg = "E_INVALID_ACCESS_ATTEMPT";
+		return -1;
+	}
+	
 	for (int i = 0; i < 1000; i++)
 	{
 		for (int j = 0; j < 512; j++)
@@ -83,19 +109,22 @@ int UMDLibFS::FSSync()
 
 int UMDLibFS::FSReset()
 {
-	FSSync();
-	UMDLibFS.close();
-	
-	if (FSBoot() == true) 
+	if (UMDLibFS == NULL) // if file system is unavailable
 	{
-		UMDLibFS.open();	
-		return 0;
-	}
-	
-	else
-	{
+		osErrMsg = "E_INVALID_ACCESS_ATTEMPT";
 		return -1;
 	}
+		
+	int result;
+	result = FSSync();
+	
+	if (result == -1)
+	{
+		osErrMsg = "E_FILE_RESET";
+		return -1;
+	}
+	
+	UMDLibFS = NULL; //setting file system unavailable
 }
 
 int UMDLibFS::FileCreate(string file)
