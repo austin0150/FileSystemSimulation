@@ -59,7 +59,7 @@ void UMDLibFS::INIT()
 	WorkingDisk[3][29] = 0;
 }
 
-int UMDLibFS::FSBoot()
+int UMDLibFS::FSBoot() //issue on get superblock
 {
 	if (ExternalDisk == NULL)
 	{
@@ -71,23 +71,23 @@ int UMDLibFS::FSBoot()
 		for (int j = 0; j < 512; j++)
 
 		{
-			ExternalDisk[i][j] = WorkingDisk[i][j];
+			WorkingDisk[i][j] = ExternalDisk[i][j];
 		}
 	}
 	
 	if (WorkingDisk.GetSuperBlock != CorrectSuperBlock) //need to fix this line
 	{
 	   	 osErrMsg = "E_FILE_BOOT";
-		 return -1;
+		 return 0;
 	}
 
 	else
 	{
-		return 0;
+		return -1;
 	}
 }
 
-int UMDLibFS::FSSync()
+int UMDLibFS::FSSync() //complete
 {
 	if (FileSystemUnavailable == true) // if file system is unavailable
 	{
@@ -107,7 +107,7 @@ int UMDLibFS::FSSync()
 	return 0;
 }
 
-int UMDLibFS::FSReset()
+int UMDLibFS::FSReset() //complete
 {
 	if (FileSystemUnavailable == true) // if file system is unavailable
 	{
@@ -124,7 +124,7 @@ int UMDLibFS::FSReset()
 		return -1;
 	}
 	
-	UMDLibFS = NULL; //setting file system unavailable
+	FileSystemUnavailable = false ; //setting file system unavailable
 }
 
 int UMDLibFS::FileCreate(string file)
@@ -267,7 +267,7 @@ int UMDLibFS::DirUnlink(string path)
 	return 0;
 }
 
-int UMDLibFS::DiskInit()
+int UMDLibFS::DiskInit() //complete
 {
 	for (int i = 0; i < 512; i++)
 	{
@@ -277,7 +277,7 @@ int UMDLibFS::DiskInit()
 	return 0;
 }
 
-int UMDLibFS::DiskLoad()
+int UMDLibFS::DiskLoad() //complete
 {
 	for (int i = 0; i <1000; i++)
 	{
