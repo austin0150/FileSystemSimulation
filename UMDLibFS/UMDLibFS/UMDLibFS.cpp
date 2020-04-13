@@ -89,7 +89,7 @@ int UMDLibFS::FSBoot()
 
 int UMDLibFS::FSSync()
 {
-	if (UMDLibFS == NULL) // if file system is unavailable
+	if (FileSystemUnavailable == true) // if file system is unavailable
 	{
 		osErrMsg = "E_INVALID_ACCESS_ATTEMPT";
 		return -1;
@@ -109,7 +109,7 @@ int UMDLibFS::FSSync()
 
 int UMDLibFS::FSReset()
 {
-	if (UMDLibFS == NULL) // if file system is unavailable
+	if (FileSystemUnavailable == true) // if file system is unavailable
 	{
 		osErrMsg = "E_INVALID_ACCESS_ATTEMPT";
 		return -1;
