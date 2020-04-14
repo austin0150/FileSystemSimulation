@@ -157,7 +157,72 @@ int UMDLibFS::FileRead(int fd, string buffer, int size)
 
 int UMDLibFS::FileWrite(int fd, string buffer, int size)
 {
-	return 0;
+	if (FileSystemUnavailible)
+	{
+		osErrMsg = "E_INVALID_ACCESS_ATTEMPT";
+		return -1;
+	}
+
+	if (OpenFileTable[fd] == "")
+	{
+		osErrMsg = "E_WRITE_BAD_FD";
+		return -1;
+	}
+
+	int nodeSector;
+	int nodeOffset;
+
+	if (GetNodeLocation(OpenFileTable[fd], nodeSector, nodeOffset) == -1)
+	{
+		osErrMsg = "E_WRITE_FILE";
+		return -1;
+	}
+
+	int numBytesWritten = 0;
+	int filePointer = CurrentFilePointerTable[fd];
+	int currentDatablock = filePointer / 512;
+	int currentOffset = filePointer - (currentDatablock * 512);
+	int currentSector = WorkingDisk[nodeSector][nodeOffset + 2 + currentDatablock];
+
+	try
+	{
+		//iterate through file
+		for (int i = 0; i < size; i++)
+		{
+			if (filePointer == WorkingDisk[nodeSector][nodeOffset])
+			{
+				return numBytesWritten;
+			}
+
+			if (currentOffset == 511)
+			{
+				if (filePointer == 5110)
+				{
+					return numBytesWritten;
+				}
+
+				int nextDataBlockNum = (filePointer / 512) + 1;
+
+				currentSector = WorkingDisk[nodeSector][nodeOffset + 2 + nextDataBlockNum];
+				currentOffset = 0;
+
+			}
+
+			WorkingDisk[currentSector][currentOffset] = buffer[i];
+
+			currentOffset++;
+			filePointer++;
+			numBytesWritten++;
+			CurrentFilePointerTable[fd] = filePointer;
+		}
+	}
+	catch (exception e)
+	{
+		osErrMsg = "E_WRITE_FILE";
+		return -1;
+	}
+
+	return numBytesWritten;
 }
 
 int UMDLibFS::FileSeek(int fd, int offset)
