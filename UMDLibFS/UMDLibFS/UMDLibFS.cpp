@@ -86,7 +86,73 @@ int UMDLibFS::FileOpen(string file)
 
 int UMDLibFS::FileRead(int fd, string buffer, int size)
 {
-	return 0;
+
+	if (FileSystemUnavailible)
+	{
+		osErrMsg = "E_INVALID_ACCESS_ATTEMPT";
+		return -1;
+	}
+
+	if (OpenFileTable[fd] == "")
+	{
+		osErrMsg = "E_READ_BAD_FD";
+		return -1;
+	}
+
+	int nodeSector;
+	int nodeOffset; 
+	
+	if (GetNodeLocation(OpenFileTable[fd], nodeSector, nodeOffset) == -1)
+	{
+		osErrMsg = "E_READ_FILE";
+		return -1;
+	}
+
+	int numBytesRead = 0;
+	int filePointer = CurrentFilePointerTable[fd];
+	int currentDatablock = filePointer / 512;
+	int currentOffset = filePointer - (currentDatablock * 512);
+	int currentSector = WorkingDisk[nodeSector][nodeOffset + 2 + currentDatablock];
+
+	try
+	{
+		//iterate through file
+		for (int i = 0; i < size; i++)
+		{
+			if (filePointer == WorkingDisk[nodeSector][nodeOffset])
+			{
+				return numBytesRead;
+			}
+
+			if (currentOffset == 511)
+			{
+				if (filePointer == 5110)
+				{
+					return numBytesRead;
+				}
+				
+				int nextDataBlockNum = (filePointer / 512) + 1;
+
+				currentSector = WorkingDisk[nodeSector][nodeOffset + 2 + nextDataBlockNum];
+				currentOffset = 0;
+
+			}
+
+			buffer.append(1, (char)WorkingDisk[currentSector][currentOffset]);
+
+			currentOffset++;
+			filePointer++;
+			numBytesRead++;
+			CurrentFilePointerTable[fd] = filePointer;
+		}
+	}
+	catch (exception e)
+	{
+		osErrMsg = "E_READ_FILE";
+		return -1;
+	}
+
+	return numBytesRead;
 }
 
 int UMDLibFS::FileWrite(int fd, string buffer, int size)
@@ -531,4 +597,77 @@ string UMDLibFS::GetInodeName(int nodeNumber)
 	}
 
 	return nodeName;
+}
+
+int UMDLibFS::GetNodeLocation(string path, int& nodeSector, int& nodeOffset)
+{
+	string splitPath[256];
+	int numNodes = SplitFilePath(splitPath, path);
+
+	int nextInodeToSearch = 0;
+	int offset = 0;
+	int nodesFound = 0;
+	string nodeName;
+	bool foundNextNode = false;
+	int LastFoundAddr = 0;
+
+	//iterate through the items of the path
+	for (int i = 0; i < numNodes; i++)
+	{
+		//iterate through the inodes on the disk
+		for (int k = 3; k < 9; k++)
+		{
+			//iterate through all Inodes in that sector
+			for (int j = 0; j < 17; j++)
+			{
+				offset = (j * 30);
+
+				//If the Inode is the one we are looking for
+				if (WorkingDisk[k][offset + 28] == nextInodeToSearch)
+				{
+					nodesFound++;
+					LastFoundAddr = nextInodeToSearch;
+
+					//If it's the file
+					if (i == (numNodes - 1))
+					{
+						nodeSector = k;
+						nodeOffset = (offset + 28);
+						return 1;
+					}
+
+					int dataBlockWPointers = WorkingDisk[k][offset + 2];
+					//Iterate through the data block that holds file pointers for that Inode
+					for (int h = 0; h < 512; h++)
+					{
+						if (WorkingDisk[dataBlockWPointers][h] != 0)
+						{
+							//If one of the Inode names matches the next node name
+							if (GetInodeName(WorkingDisk[dataBlockWPointers][h]) == splitPath[i])
+							{
+								
+								nextInodeToSearch = WorkingDisk[dataBlockWPointers][h];
+								foundNextNode = true;
+							}
+						}
+						else
+						{
+							break;
+						}
+
+					}
+
+				}
+
+			}
+		}
+
+	}
+
+	if ((nodesFound) < numNodes)
+	{
+		osErrMsg = "E_DIR_CREATE";
+		return -1;
+	}
+	
 }

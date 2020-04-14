@@ -19,6 +19,7 @@ public:
 	bool DataBlockMap[990];
 
 	string OpenFileTable[10];
+	int CurrentFilePointerTable[10];
 	
 	int FSBoot();
 	int FSSync();
@@ -46,6 +47,7 @@ public:
 	int SplitFilePath(string splitPath[], string path);
 	int NavigateToDir(string path);
 	string GetInodeName(int nodeNumber);
+	int GetNodeLocation(string path, int& nodeSector, int& nodeOffset);
 	void INIT();
 };
 
