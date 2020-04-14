@@ -48,6 +48,7 @@ public:
 	int NavigateToDir(string path);
 	string GetInodeName(int nodeNumber);
 	int GetNodeLocation(string path, int& nodeSector, int& nodeOffset);
+	int AllocDataBlock();
 	void INIT();
 };
 
