@@ -124,7 +124,7 @@ int UMDLibFS::FSReset() //complete
 		return -1;
 	}
 	
-	FileSystemUnavailable = false ; //setting file system unavailable
+	FileSystemUnavailable = true ; //setting file system unavailable
 }
 
 int UMDLibFS::FileCreate(string file)
@@ -132,8 +132,28 @@ int UMDLibFS::FileCreate(string file)
 	return 0;
 }
 
-int UMDLibFS::FileOpen(string file)
+int UMDLibFS::FileOpen(string file) //in progress
 {
+	if (FileSystemUnavailable == true)
+	{
+		osErrMsg = “E_INVALID_ACCESS_ATTEMPT”;
+		return -1;
+	}
+	
+	if(File does not exist at path) //need to fix this line
+	{
+		set osErrMsg = “E_NO_SUCH_FILE”;
+		return -1;
+	}
+	
+	if(num files open  = MAXFILESOPEN) //need to fix this line
+	{
+		set osErrMsg = “E_TOO_MANY_OPEN_FILES”;
+		return -1;
+	}
+
+	//Add inode pointer to OpenFileTable and return its position in the table
+
 	return 0;
 }
 
@@ -152,8 +172,22 @@ int UMDLibFS::FileSeek(int fd, int offset)
 	return 0;
 }
 
-int UMDLibFS::FileClose(int fd)
+int UMDLibFS::FileClose(int fd) //in progress
 {
+	if (FileSystemUnavailable == true)
+	{
+		osErrMsg = "";
+		return -1;
+	}
+	
+	if (fd not present in OpenFileTable) //need to fix this line
+	{	
+		osErrMsg = “E_CLOSE_ BAD_FD”;
+		return -1;
+	}	
+	
+	//remove fd from the OpenFileTable
+	
 	return 0;
 }
 
