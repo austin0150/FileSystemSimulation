@@ -140,13 +140,13 @@ int UMDLibFS::FileOpen(string file) //in progress
 		return -1;
 	}
 	
-	if(File does not exist at path) //need to fix this line
+	if(file(path) == NULL) //need to fix this line
 	{
 		set osErrMsg = “E_NO_SUCH_FILE”;
 		return -1;
 	}
 	
-	if(num files open  = MAXFILESOPEN) //need to fix this line
+	if(FilesOpen = 100) //need to fix this line
 	{
 		set osErrMsg = “E_TOO_MANY_OPEN_FILES”;
 		return -1;
