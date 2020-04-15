@@ -59,7 +59,7 @@ void UMDLibFS::INIT()
 	WorkingDisk[3][29] = 0;
 }
 
-int UMDLibFS::FSBoot()
+int UMDLibFS::FSBoot() //complete
 {
 	if (ExternalDisk == NULL)
 	{
@@ -132,7 +132,7 @@ int UMDLibFS::FileCreate(string file)
 	return 0;
 }
 
-int UMDLibFS::FileOpen(string file) //in progress
+int UMDLibFS::FileOpen(string file) 
 {
 	if (FileSystemUnavailable)
 	{
@@ -144,19 +144,32 @@ int UMDLibFS::FileOpen(string file) //in progress
 	if (GetNodeLocation(file, intOne,intTwo) == -1) //checks if file exists as path
 
 	{
-		set osErrMsg = “E_NO_SUCH_FILE”;
+		osErrMsg = “E_NO_SUCH_FILE”;
 		return -1;
 	}
 	
 	if(FilesOpen = 100) 
 	{
-		set osErrMsg = “E_TOO_MANY_OPEN_FILES”;
+		osErrMsg = “E_TOO_MANY_OPEN_FILES”;
 		return -1;
 	}
 
 	//Add inode pointer to OpenFileTable and return its position in the table
+	int inodePointer = OpenFileTable[nodeSector][nodeOffset + 2];
 
-	return 0;
+	for (int i = 0; i < 512; i++)
+	{
+		if (OpenFileTable[inodePointer][i] == 0)
+
+		{
+			WorkingDisk[inodePointer][i] = NumInodes;
+			NumInodes++;
+			break;
+		}
+	}
+
+	WorkingDisk[nodeSector][nodeOffset] ++;
+	return inodePointer;
 }
 
 int UMDLibFS::FileRead(int fd, string buffer, int size)
@@ -189,6 +202,9 @@ int UMDLibFS::FileClose(int fd) //in progress
 	}	
 	
 	//remove fd from the OpenFileTable
+	int tempInt = NULL;
+	CurrentFilePointerTable[fd] = tempInt;
+	delete tempInt;
 	
 	return 0;
 }
