@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <cstddef>
+#include "Logging.h"
 
 using namespace std;
 
@@ -18,6 +19,9 @@ public:
 	bool InodeMap[6][17];
 	bool DataBlockMap[990];
 
+	bool ExternalInodeMap[6][17];
+	bool ExternalDataBlockMap[990];
+
 	string OpenFileTable[10];
 	int CurrentFilePointerTable[10];
 	
@@ -33,7 +37,7 @@ public:
 
 	int FileCreate(string file);
 	int FileOpen(string file);
-	int FileRead(int fd, string buffer, int size);
+	int FileRead(int fd, string &buffer, int size);
 	int FileWrite(int fd, string buffer, int size);
 	int FileSeek(int fd, int offset);
 	int FileClose(int fd);
@@ -49,6 +53,8 @@ public:
 	string GetInodeName(int nodeNumber);
 	int GetNodeLocation(string path, int& nodeSector, int& nodeOffset);
 	int AllocDataBlock();
+	int DumpLocalDisk();
+	int DumpRemoteDisk();
 	void INIT();
 };
 
