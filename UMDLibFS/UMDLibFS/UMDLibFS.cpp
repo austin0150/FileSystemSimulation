@@ -59,7 +59,7 @@ void UMDLibFS::INIT()
 	WorkingDisk[3][29] = 0;
 }
 
-int UMDLibFS::FSBoot() //issue on get superblock
+int UMDLibFS::FSBoot()
 {
 	if (ExternalDisk == NULL)
 	{
@@ -75,7 +75,7 @@ int UMDLibFS::FSBoot() //issue on get superblock
 		}
 	}
 	
-	if (WorkingDisk.GetSuperBlock != CorrectSuperBlock) //need to fix this line
+	if (WorkingDisk.GetSuperBlock != CorrectSuperBlock)
 	{
 	   	 osErrMsg = "E_FILE_BOOT";
 		 return 0;
@@ -89,7 +89,7 @@ int UMDLibFS::FSBoot() //issue on get superblock
 
 int UMDLibFS::FSSync() //complete
 {
-	if (FileSystemUnavailable == true) // if file system is unavailable
+	if (FileSystemUnavailable) // if file system is unavailable
 	{
 		osErrMsg = "E_INVALID_ACCESS_ATTEMPT";
 		return -1;
@@ -109,7 +109,7 @@ int UMDLibFS::FSSync() //complete
 
 int UMDLibFS::FSReset() //complete
 {
-	if (FileSystemUnavailable == true) // if file system is unavailable
+	if (FileSystemUnavailable) // if file system is unavailable
 	{
 		osErrMsg = "E_INVALID_ACCESS_ATTEMPT";
 		return -1;
@@ -134,19 +134,21 @@ int UMDLibFS::FileCreate(string file)
 
 int UMDLibFS::FileOpen(string file) //in progress
 {
-	if (FileSystemUnavailable == true)
+	if (FileSystemUnavailable)
 	{
 		osErrMsg = “E_INVALID_ACCESS_ATTEMPT”;
 		return -1;
 	}
 	
-	if(file(path) == NULL) //need to fix this line
+	int intOne, intTwo;
+	if (GetNodeLocation(file, intOne,intTwo) == -1) //checks if file exists as path
+
 	{
 		set osErrMsg = “E_NO_SUCH_FILE”;
 		return -1;
 	}
 	
-	if(FilesOpen = 100) //need to fix this line
+	if(FilesOpen = 100) 
 	{
 		set osErrMsg = “E_TOO_MANY_OPEN_FILES”;
 		return -1;
@@ -174,13 +176,13 @@ int UMDLibFS::FileSeek(int fd, int offset)
 
 int UMDLibFS::FileClose(int fd) //in progress
 {
-	if (FileSystemUnavailable == true)
+	if (FileSystemUnavailable)
 	{
 		osErrMsg = "";
 		return -1;
 	}
 	
-	if (fd not present in OpenFileTable) //need to fix this line
+	if (OpenFileTable[fd] == "") //if fd does not exist in open file table
 	{	
 		osErrMsg = “E_CLOSE_ BAD_FD”;
 		return -1;
