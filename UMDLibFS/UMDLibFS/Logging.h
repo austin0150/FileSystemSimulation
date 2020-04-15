@@ -1,15 +1,16 @@
 #pragma once
 #include <string>
+#include<fstream>
 
 using namespace std;
 
-class Logging
+static class Logging
 {
 public:
 	string LogFileName;
 	string LogFileNameWMemDump;
 
-	void WriteToLogFile(string line);
-	void WriteToMemDumpLog(string line);
+	static void WriteToLogFile(string line);
+	static void WriteToMemDumpLog(string line);
 };
 
