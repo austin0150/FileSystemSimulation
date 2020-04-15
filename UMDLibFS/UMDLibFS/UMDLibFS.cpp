@@ -61,9 +61,10 @@ void UMDLibFS::INIT()
 
 int UMDLibFS::FSBoot() //complete
 {
-	if (ExternalDisk == NULL)
+	//Check if the external disk exists
+	if (ExternalDisk[0][0] != SUPERBLOCK_NUMBER)
 	{
-		ExternalDisk = DiskImage;
+		DiskInit();
 	}
 
 	for (int i = 0; i < 1000; i++)
@@ -75,16 +76,26 @@ int UMDLibFS::FSBoot() //complete
 		}
 	}
 
-	if (WorkingDisk.GetSuperBlock != CorrectSuperBlock)
+	for (int i = 0; i < 990; i++)
 	{
-	   	 osErrMsg = "E_FILE_BOOT";
-		 return 0;
+		DataBlockMap[i] = ExternalDataBlockMap[i];
 	}
 
-	else
+	for (int i = 0; i < 6; i++)
 	{
+		for (int j = 0; j < 17; j++)
+		{
+			InodeMap[i][j] = ExternalInodeMap[i][j];
+		}
+	}
+
+	if (WorkingDisk[0][0] != SUPERBLOCK_NUMBER)
+	{
+		osErrMsg = "E_FILE_BOOT";
 		return -1;
 	}
+
+	return 0;
 }
 
 int UMDLibFS::FSSync() //complete
@@ -813,9 +824,29 @@ int UMDLibFS::DirUnlink(string path)
 
 int UMDLibFS::DiskInit() //complete
 {
-	for (int i = 0; i < 512; i++)
+	for (int i = 0; i < 1000; i++)
 	{
-		WorkingDisk[sector][i] = 0;
+		for (int j = 0; j < 512; j++)
+		{
+			ExternalDisk[i][j] = 0;
+		}
+	}
+
+	ExternalDisk[0][0] = SUPERBLOCK_NUMBER;
+
+	//Init the datablock map
+	for (int i = 0; i < 990; i++)
+	{
+		ExternalDataBlockMap[i] = false;
+	}
+
+	//init inode map
+	for (int i = 0; i < 6; i++)
+	{
+		for (int j = 0; j < 17; j++)
+		{
+			ExternalInodeMap[i][j] = false;
+		}
 	}
 
 	return 0;
