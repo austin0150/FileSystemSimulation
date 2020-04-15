@@ -427,7 +427,7 @@ int UMDLibFS::FileSeek(int fd, int offset)
 	return 0;
 }
 
-int UMDLibFS::FileClose(int fd) //in progress
+int UMDLibFS::FileClose(int fd) 
 {
 	if (FileSystemUnavailable)
 	{
