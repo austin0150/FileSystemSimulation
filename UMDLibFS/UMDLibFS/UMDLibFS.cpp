@@ -22,7 +22,7 @@ static int ExternalDisk[1000][512];
 
 void UMDLibFS()
 {
-	
+
 }
 
 void UMDLibFS::INIT()
@@ -46,7 +46,7 @@ void UMDLibFS::INIT()
 			InodeMap[i][j] = false;
 		}
 	}
-	
+
 	//Add root dir
 	NumInodes++;
 	InodeMap[0][0] = true;
@@ -65,7 +65,7 @@ int UMDLibFS::FSBoot() //complete
 	{
 		ExternalDisk = DiskImage;
 	}
-	
+
 	for (int i = 0; i < 1000; i++)
 	{
 		for (int j = 0; j < 512; j++)
@@ -74,7 +74,7 @@ int UMDLibFS::FSBoot() //complete
 			WorkingDisk[i][j] = ExternalDisk[i][j];
 		}
 	}
-	
+
 	if (WorkingDisk.GetSuperBlock != CorrectSuperBlock)
 	{
 	   	 osErrMsg = "E_FILE_BOOT";
@@ -94,7 +94,7 @@ int UMDLibFS::FSSync() //complete
 		osErrMsg = "E_INVALID_ACCESS_ATTEMPT";
 		return -1;
 	}
-	
+
 	for (int i = 0; i < 1000; i++)
 	{
 		for (int j = 0; j < 512; j++)
@@ -114,16 +114,16 @@ int UMDLibFS::FSReset() //complete
 		osErrMsg = "E_INVALID_ACCESS_ATTEMPT";
 		return -1;
 	}
-		
+
 	int result;
 	result = FSSync();
-	
+
 	if (result == -1)
 	{
 		osErrMsg = "E_FILE_RESET";
 		return -1;
 	}
-	
+
 	FileSystemUnavailable = true ; //setting file system unavailable
 }
 
@@ -223,14 +223,14 @@ int UMDLibFS::FileCreate(string file)
 
 }
 
-int UMDLibFS::FileOpen(string file) 
+int UMDLibFS::FileOpen(string file)
 {
 	if (FileSystemUnavailable)
 	{
 		osErrMsg = “E_INVALID_ACCESS_ATTEMPT”;
 		return -1;
 	}
-	
+
 	int intOne, intTwo;
 	if (GetNodeLocation(file, intOne,intTwo) == -1) //checks if file exists as path
 
@@ -238,8 +238,8 @@ int UMDLibFS::FileOpen(string file)
 		osErrMsg = “E_NO_SUCH_FILE”;
 		return -1;
 	}
-	
-	if(FilesOpen = 100) 
+
+	if(FilesOpen = 100)
 	{
 		osErrMsg = “E_TOO_MANY_OPEN_FILES”;
 		return -1;
@@ -279,8 +279,8 @@ int UMDLibFS::FileRead(int fd, string& buffer, int size)
 	}
 
 	int nodeSector;
-	int nodeOffset; 
-	
+	int nodeOffset;
+
 	if (GetNodeLocation(OpenFileTable[fd], nodeSector, nodeOffset) == -1)
 	{
 		osErrMsg = "E_READ_FILE";
@@ -309,7 +309,7 @@ int UMDLibFS::FileRead(int fd, string& buffer, int size)
 				{
 					return numBytesRead;
 				}
-				
+
 				int nextDataBlockNum = (filePointer / 512) + 1;
 
 				currentSector = WorkingDisk[nodeSector][nodeOffset + 2 + nextDataBlockNum];
@@ -423,18 +423,18 @@ int UMDLibFS::FileClose(int fd) //in progress
 		osErrMsg = "";
 		return -1;
 	}
-	
+
 	if (OpenFileTable[fd] == "") //if fd does not exist in open file table
-	{	
+	{
 		osErrMsg = “E_CLOSE_ BAD_FD”;
 		return -1;
-	}	
-	
+	}
+
 	//remove fd from the OpenFileTable
 	int tempInt = NULL;
 	CurrentFilePointerTable[fd] = tempInt;
 	delete tempInt;
-	
+
 	return 0;
 }
 
@@ -588,7 +588,7 @@ int UMDLibFS::DirCreate(string path)
 				InodeMap[i][j] = true;
 				newNodeSector = i + 3;
 				newNodeOffset = j * 30;
-				
+
 				//End the loop
 				i = 6;
 				j = 47;
@@ -719,7 +719,7 @@ int UMDLibFS::DirRead(string path, string &buffer, int size)
 				osErrMsg = "E_BUFFER_TOO_SMALL";
 				return -1;
 			}
-			
+
 
 		}
 		else
@@ -817,7 +817,7 @@ int UMDLibFS::DiskInit() //complete
 	{
 		WorkingDisk[sector][i] = 0;
 	}
-	
+
 	return 0;
 }
 
@@ -830,7 +830,7 @@ int UMDLibFS::DiskLoad() //complete
 			WorkingDisk[i][j] = ExternalDisk[i][j];
 		}
 	}
-	
+
 	return 0;
 }
 
@@ -933,7 +933,7 @@ int UMDLibFS::SplitFilePath(string splitPath[], string path)
 		{
 			endName = true;
 		}
-		
+
 		if (i == length - 1 && endName)
 		{
 			splitPath[pathCounter] = path.substr(startName, (i - (startName - 1)));
@@ -979,7 +979,7 @@ int UMDLibFS::NavigateToDir(string path)
 				{
 					nodesFound++;
 					LastFoundAddr = nextInodeToSearch;
-					
+
 					int dataBlockWPointers = WorkingDisk[k][offset + 2];
 					//Iterate through the data block that holds file pointers for that Inode
 					for (int h = 0; h < 512; h++)
@@ -997,7 +997,7 @@ int UMDLibFS::NavigateToDir(string path)
 						{
 							break;
 						}
-						
+
 					}
 
 				}
@@ -1049,8 +1049,6 @@ string UMDLibFS::GetInodeName(int nodeNumber)
 
 	return nodeName;
 }
-<<<<<<< HEAD
-=======
 
 int UMDLibFS::GetNodeLocation(string path, int& nodeSector, int& nodeOffset)
 {
@@ -1211,7 +1209,7 @@ int UMDLibFS::DumpLocalDisk()
 			}
 		}
 		Logging::WriteToMemDumpLog(buffer);
-		
+
 	}
 
 	Logging::WriteToMemDumpLog("End Disk Dump -------------------------");
@@ -1222,4 +1220,3 @@ int UMDLibFS::DumpRemoteDisk()
 {
 	return 0;
 }
->>>>>>> master
