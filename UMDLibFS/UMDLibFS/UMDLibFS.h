@@ -15,6 +15,7 @@ public:
 	int SUPERBLOCK_NUMBER = 15;
 	string osErrMsg;
 	int NumInodes = 0;
+	int ExternalNumInodes = 0;
 
 	bool InodeMap[6][17];
 	bool DataBlockMap[990];

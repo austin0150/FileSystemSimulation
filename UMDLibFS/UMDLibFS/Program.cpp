@@ -8,8 +8,7 @@ int main()
 
 	lib.FileSystemUnavailible = false;
 
-	lib.INIT();
-	//string path = "/CIS450/prog3/UMDLibFS.cpp";
+	//lib.INIT();
 
 	Logging::WriteToLogFile("test");
 
@@ -45,9 +44,9 @@ int main()
 
 	path = "/Test/SubTest2/";
 	result = lib.DirUnlink(path);
-	//lib.DumpLocalDisk();
+	lib.DumpLocalDisk();
 
-	//result = lib.FileUnlink(path);
+	result = lib.FileUnlink(path);
 
 	//result = lib.FileRead()
 
