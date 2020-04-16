@@ -8,7 +8,7 @@ using namespace std;
 class UMDLibFS
 {
 public:
-	bool FileSystemUnavailible;
+	bool FileSystemUnavailible = false;
 	int NUM_SECTORS = 1000;
 	int SECTOR_SIZE = 512;
 	int MAX_FILES = 100;
