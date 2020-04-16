@@ -1,0 +1,8 @@
+FS boot with result: 0
+Create Dir at: /Test/ , Result = 0
+Create Dir at: /Test/SubTest/ , Result = 0
+FS boot with result: 0
+Create Dir at: /Test/ , Result = 0
+Create Dir at: /Test/SubTest/ , Result = 0
+Create Dir at: /Test/SubTest/ , Result = -1
+E_DUPLICATE_FILE_NAME

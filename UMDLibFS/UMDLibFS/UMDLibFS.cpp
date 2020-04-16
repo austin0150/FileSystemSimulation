@@ -219,7 +219,7 @@ int UMDLibFS::FileCreate(string file)
 	}
 
 	//check for dir duplicates
-	if (CheckNodeDuplicate(nodeName, newNodeSector, newNodeOffset) == -1)
+	if (CheckNodeDuplicate(nodeName, newNodeSector, newNodeOffset, WorkingDisk[nodeSector][nodeOffset+28]) == -1)
 	{
 		osErrMsg = "E_DUPLICATE_FILE_NAME";
 		return -1;
@@ -663,7 +663,7 @@ int UMDLibFS::DirCreate(string path)
 	}
 
 	//check for dir duplicates
-	if (CheckNodeDuplicate(nodeName, newNodeSector, newNodeOffset) == -1)
+	if (CheckNodeDuplicate(nodeName, newNodeSector, newNodeOffset, WorkingDisk[nodeSector][nodeOffset + 28]) == -1)
 	{
 		osErrMsg = "E_DUPLICATE_FILE_NAME";
 		return -1;
@@ -1156,6 +1156,7 @@ string UMDLibFS::GetInodeName(int nodeNumber)
 {
 	int offset;
 	int nodeSector, nodeOffset;
+	bool found = false;
 
 	//iterate through the inodes on the disk
 	for (int k = 3; k < 9; k++)
@@ -1170,16 +1171,21 @@ string UMDLibFS::GetInodeName(int nodeNumber)
 			{
 				nodeSector = k;
 				nodeOffset = offset;
+				found = true;
+				break;
 			}
 		}
 	}
 
 	string nodeName = "";
-	for (int o = 0; o < 16; o++)
+	if (found)
 	{
-		if (WorkingDisk[nodeSector][nodeOffset + 12 + o] != 0)
+		for (int o = 0; o < 16; o++)
 		{
-			nodeName.append(1, (char)WorkingDisk[nodeSector][nodeOffset + 12 + o]);
+			if (WorkingDisk[nodeSector][nodeOffset + 12 + o] != 0)
+			{
+				nodeName.append(1, (char)WorkingDisk[nodeSector][nodeOffset + 12 + o]);
+			}
 		}
 	}
 
@@ -1419,15 +1425,20 @@ int UMDLibFS::DumpRemoteDisk()
 	return 0;
 }
 
-int UMDLibFS::CheckNodeDuplicate(string name, int sector, int offset)
+int UMDLibFS::CheckNodeDuplicate(string name, int sector, int offset, int parentNode)
 {
+	int calcOffset;
 	for (int i = 3; i < 9; i++)
 	{
 		for (int j = 0; j < 17; j++)
 		{
-			if ((GetInodeName(WorkingDisk[i][j + 28]) == name) && (i != sector) && (j != offset))
+			calcOffset = j * 30;
+			int possNodeNum = WorkingDisk[i][calcOffset + 28];
+			string nodeName = GetInodeName(possNodeNum);
+
+			if ((nodeName == name) && ((i != sector) || (calcOffset != offset)))
 			{
-				if (WorkingDisk[i][j + 29] == WorkingDisk[sector][offset + 29])
+				if (WorkingDisk[i][calcOffset + 29] == parentNode)
 				{
 					return -1;
 				}

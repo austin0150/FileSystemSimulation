@@ -11,7 +11,7 @@ public:
 	bool FileSystemUnavailible = false;
 	int NUM_SECTORS = 1000;
 	int SECTOR_SIZE = 512;
-	int MAX_FILES = 100;
+	int MAX_FILES = 2;
 	int SUPERBLOCK_NUMBER = 15;
 	string osErrMsg;
 	int NumInodes = 0;
@@ -56,7 +56,7 @@ public:
 	int AllocDataBlock();
 	int DumpLocalDisk();
 	int DumpRemoteDisk();
-	int CheckNodeDuplicate(string name, int sector, int offset);
+	int CheckNodeDuplicate(string name, int sector, int offset, int parentNode);
 	void INIT();
 };
 
