@@ -8,13 +8,14 @@ using namespace std;
 class UMDLibFS
 {
 public:
-	bool FileSystemUnavailible;
+	bool FileSystemUnavailible = false;
 	int NUM_SECTORS = 1000;
 	int SECTOR_SIZE = 512;
 	int MAX_FILES = 100;
 	int SUPERBLOCK_NUMBER = 15;
 	string osErrMsg;
 	int NumInodes = 0;
+	int ExternalNumInodes = 0;
 
 	bool InodeMap[6][17];
 	bool DataBlockMap[990];
@@ -55,6 +56,7 @@ public:
 	int AllocDataBlock();
 	int DumpLocalDisk();
 	int DumpRemoteDisk();
+	int CheckNodeDuplicate(string name, int sector, int offset, int parentNode);
 	void INIT();
 };
 

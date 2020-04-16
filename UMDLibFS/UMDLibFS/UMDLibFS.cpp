@@ -22,7 +22,7 @@ static int ExternalDisk[1000][512];
 
 void UMDLibFS()
 {
-
+	
 }
 
 void UMDLibFS::INIT()
@@ -61,9 +61,10 @@ void UMDLibFS::INIT()
 
 int UMDLibFS::FSBoot() //complete
 {
-	if (ExternalDisk == NULL)
+	//Check if the external disk exists
+	if (ExternalDisk[0][0] != SUPERBLOCK_NUMBER)
 	{
-		ExternalDisk = DiskImage;
+		DiskInit();
 	}
 
 	for (int i = 0; i < 1000; i++)
@@ -75,21 +76,31 @@ int UMDLibFS::FSBoot() //complete
 		}
 	}
 
-	if (WorkingDisk.GetSuperBlock != CorrectSuperBlock)
+	for (int i = 0; i < 990; i++)
 	{
-	   	 osErrMsg = "E_FILE_BOOT";
-		 return 0;
+		DataBlockMap[i] = ExternalDataBlockMap[i];
 	}
 
-	else
+	for (int i = 0; i < 6; i++)
 	{
+		for (int j = 0; j < 17; j++)
+		{
+			InodeMap[i][j] = ExternalInodeMap[i][j];
+		}
+	}
+
+	if (WorkingDisk[0][0] != SUPERBLOCK_NUMBER)
+	{
+		osErrMsg = "E_FILE_BOOT";
 		return -1;
 	}
+
+	return 0;
 }
 
 int UMDLibFS::FSSync() //complete
 {
-	if (FileSystemUnavailable) // if file system is unavailable
+	if (FileSystemUnavailible) // if file system is unavailable
 	{
 		osErrMsg = "E_INVALID_ACCESS_ATTEMPT";
 		return -1;
@@ -109,7 +120,7 @@ int UMDLibFS::FSSync() //complete
 
 int UMDLibFS::FSReset() //complete
 {
-	if (FileSystemUnavailable) // if file system is unavailable
+	if (FileSystemUnavailible) // if file system is unavailable
 	{
 		osErrMsg = "E_INVALID_ACCESS_ATTEMPT";
 		return -1;
@@ -124,7 +135,7 @@ int UMDLibFS::FSReset() //complete
 		return -1;
 	}
 
-	FileSystemUnavailable = true ; //setting file system unavailable
+	FileSystemUnavailible = true ; //setting file system unavailable
 }
 
 int UMDLibFS::FileCreate(string file)
@@ -132,6 +143,12 @@ int UMDLibFS::FileCreate(string file)
 	if (FileSystemUnavailible)
 	{
 		osErrMsg = "E_INVALID_ACCESS_ATTEMPT";
+		return -1;
+	}
+
+	if (NumInodes == MAX_FILES)
+	{
+		osErrMsg = "E_NUM_INODES";
 		return -1;
 	}
 
@@ -156,6 +173,12 @@ int UMDLibFS::FileCreate(string file)
 	int lastNode = SplitFilePath(splitPath, file) - 1;
 	string nodeName = splitPath[lastNode];
 	int nameLength = nodeName.length();
+
+	if (nameLength > 16)
+	{
+		osErrMsg = "E_FILE_NAME_LENGTH";
+		return -1;
+	}
 
 	//Get the offset of the parent directory
 	for (int i = 3; i < 9; i++)
@@ -195,6 +218,13 @@ int UMDLibFS::FileCreate(string file)
 		}
 	}
 
+	//check for dir duplicates
+	if (CheckNodeDuplicate(nodeName, newNodeSector, newNodeOffset, WorkingDisk[nodeSector][nodeOffset+28]) == -1)
+	{
+		osErrMsg = "E_DUPLICATE_FILE_NAME";
+		return -1;
+	}
+
 	//Add new Inode to parent directory
 	int nodeWPointers = WorkingDisk[nodeSector][nodeOffset + 2];
 	for (int i = 0; i < 512; i++)
@@ -225,9 +255,9 @@ int UMDLibFS::FileCreate(string file)
 
 int UMDLibFS::FileOpen(string file)
 {
-	if (FileSystemUnavailable)
+	if (FileSystemUnavailible)
 	{
-		osErrMsg = “E_INVALID_ACCESS_ATTEMPT”;
+		osErrMsg = "E_INVALID_ACCESS_ATTEMPT";
 		return -1;
 	}
 
@@ -235,32 +265,40 @@ int UMDLibFS::FileOpen(string file)
 	if (GetNodeLocation(file, intOne,intTwo) == -1) //checks if file exists as path
 
 	{
-		osErrMsg = “E_NO_SUCH_FILE”;
+		osErrMsg = "E_NO_SUCH_FILE";
 		return -1;
 	}
 
-	if(FilesOpen = 100)
+	int numOpenFiles = 0;
+	for (int i = 0; i < 10; i++)
 	{
-		osErrMsg = “E_TOO_MANY_OPEN_FILES”;
-		return -1;
-	}
-
-	//Add inode pointer to OpenFileTable and return its position in the table
-	int inodePointer = OpenFileTable[nodeSector][nodeOffset + 2];
-
-	for (int i = 0; i < 512; i++)
-	{
-		if (OpenFileTable[inodePointer][i] == 0)
-
+		if (OpenFileTable[i] != "")
 		{
-			WorkingDisk[inodePointer][i] = NumInodes;
-			NumInodes++;
+			numOpenFiles++;
+		}
+	}
+
+	if(numOpenFiles == 10)
+	{
+		osErrMsg = "E_TOO_MANY_OPEN_FILES";
+		return -1;
+	}
+
+	int fd = 0;
+
+	//Add file to open file table
+	for (int i = 0; i < 10; i++)
+	{
+		if (OpenFileTable[i] == "")
+		{
+			OpenFileTable[i] = file;
+			CurrentFilePointerTable[i] = 0;
+			fd = i;
 			break;
 		}
 	}
 
-	WorkingDisk[nodeSector][nodeOffset] ++;
-	return inodePointer;
+	return fd;
 }
 
 int UMDLibFS::FileRead(int fd, string& buffer, int size)
@@ -413,27 +451,55 @@ int UMDLibFS::FileWrite(int fd, string buffer, int size)
 
 int UMDLibFS::FileSeek(int fd, int offset)
 {
-	return 0;
+	if (FileSystemUnavailible)
+	{
+		osErrMsg = "E_INVALID_ACCESS_ATTEMPT";
+		return -1;
+	}
+
+	if (OpenFileTable[fd] == "")
+	{
+		osErrMsg = "E_SEEK_BAD_FD";
+		return -1;
+	}
+
+	string filePath = OpenFileTable[fd];
+
+	int nodeSector;
+	int nodeOffset;
+
+	GetNodeLocation(filePath, nodeSector, nodeOffset);
+
+	int fileSize = WorkingDisk[nodeOffset][nodeOffset];
+
+	if (offset > fileSize || offset < 0)
+	{
+		osErrMsg = "E_SEEK_OUT_OF_BOUNDS";
+		return -1;
+	}
+
+	CurrentFilePointerTable[fd] += offset;
+	return CurrentFilePointerTable[fd];
+
 }
 
-int UMDLibFS::FileClose(int fd) //in progress
+int UMDLibFS::FileClose(int fd) 
 {
-	if (FileSystemUnavailable)
+	if (FileSystemUnavailible)
 	{
-		osErrMsg = "";
+		osErrMsg = "E_INVALID_ACCESS_ATTEMPT";
 		return -1;
 	}
 
 	if (OpenFileTable[fd] == "") //if fd does not exist in open file table
 	{
-		osErrMsg = “E_CLOSE_ BAD_FD”;
+		osErrMsg = "E_CLOSE_ BAD_FD";
 		return -1;
 	}
 
 	//remove fd from the OpenFileTable
-	int tempInt = NULL;
-	CurrentFilePointerTable[fd] = tempInt;
-	delete tempInt;
+	CurrentFilePointerTable[fd] = 0;
+	OpenFileTable[fd] = "";
 
 	return 0;
 }
@@ -543,6 +609,12 @@ int UMDLibFS::DirCreate(string path)
 		return -1;
 	}
 
+	if (NumInodes == MAX_FILES)
+	{
+		osErrMsg = "E_MAX_INODES";
+		return -1;
+	}
+
 	int nodeNum = NavigateToDir(path);
 	if (nodeNum == -1)
 	{
@@ -596,6 +668,13 @@ int UMDLibFS::DirCreate(string path)
 		}
 	}
 
+	//check for dir duplicates
+	if (CheckNodeDuplicate(nodeName, newNodeSector, newNodeOffset, WorkingDisk[nodeSector][nodeOffset + 28]) == -1)
+	{
+		osErrMsg = "E_DUPLICATE_FILE_NAME";
+		return -1;
+	}
+
 	//Add new Inode to parent directory
 	int nodeWPointers = WorkingDisk[nodeSector][nodeOffset + 2];
 	for (int i = 0; i < 512; i++)
@@ -607,6 +686,7 @@ int UMDLibFS::DirCreate(string path)
 			break;
 		}
 	}
+
 	WorkingDisk[nodeSector][nodeOffset] ++; //Update directory size
 
 	//determine block to hold pointers to directory children
@@ -739,6 +819,12 @@ int UMDLibFS::DirUnlink(string path)
 		return -1;
 	}
 
+	if (path == "/")
+	{
+		osErrMsg = "E_DEL_ROOT_DIR";
+		return -1;
+	}
+
 	int nodeSector;
 	int nodeOffset;
 
@@ -813,10 +899,41 @@ int UMDLibFS::DirUnlink(string path)
 
 int UMDLibFS::DiskInit() //complete
 {
-	for (int i = 0; i < 512; i++)
+	for (int i = 0; i < 1000; i++)
 	{
-		WorkingDisk[sector][i] = 0;
+		for (int j = 0; j < 512; j++)
+		{
+			ExternalDisk[i][j] = 0;
+		}
 	}
+
+	ExternalDisk[0][0] = SUPERBLOCK_NUMBER;
+
+	//Init the datablock map
+	for (int i = 0; i < 990; i++)
+	{
+		ExternalDataBlockMap[i] = false;
+	}
+
+	//init inode map
+	for (int i = 0; i < 6; i++)
+	{
+		for (int j = 0; j < 17; j++)
+		{
+			ExternalInodeMap[i][j] = false;
+		}
+	}
+
+	//Add root dir
+	NumInodes++;
+	ExternalInodeMap[0][0] = true;
+    ExternalDisk[3][0] = 0;
+	ExternalDisk[3][1] = 0;
+	ExternalDisk[3][2] = 10;
+	ExternalDataBlockMap[10] = true;
+	ExternalDisk[3][12] = '/';
+	ExternalDisk[3][28] = 0;
+	ExternalDisk[3][29] = 0;
 
 	return 0;
 }
@@ -830,6 +947,21 @@ int UMDLibFS::DiskLoad() //complete
 			WorkingDisk[i][j] = ExternalDisk[i][j];
 		}
 	}
+
+	for (int i = 0; i < 990; i++)
+	{
+		DataBlockMap[i] = ExternalDataBlockMap[i];
+	}
+
+	for (int i = 0; i < 6; i++)
+	{
+		for (int k = 0; k < 17; k++)
+		{
+			InodeMap[i][k] = ExternalInodeMap[i][k];
+		}
+	}
+
+	NumInodes = ExternalNumInodes;
 
 	return 0;
 }
@@ -848,6 +980,22 @@ int UMDLibFS::DiskSave()
 			ExternalDisk[i][j] = WorkingDisk[i][j];
 		}
 	}
+
+	for (int i = 0; i < 990; i++)
+	{
+		ExternalDataBlockMap[i] = DataBlockMap[i];
+	}
+
+	for (int i = 0; i < 6; i++)
+	{
+		for (int k = 0; k < 17; k++)
+		{
+			ExternalInodeMap[i][k] = InodeMap[i][k];
+		}
+	}
+
+	ExternalNumInodes = NumInodes;
+	
 	return 0;
 }
 
@@ -1020,6 +1168,7 @@ string UMDLibFS::GetInodeName(int nodeNumber)
 {
 	int offset;
 	int nodeSector, nodeOffset;
+	bool found = false;
 
 	//iterate through the inodes on the disk
 	for (int k = 3; k < 9; k++)
@@ -1034,16 +1183,21 @@ string UMDLibFS::GetInodeName(int nodeNumber)
 			{
 				nodeSector = k;
 				nodeOffset = offset;
+				found = true;
+				break;
 			}
 		}
 	}
 
 	string nodeName = "";
-	for (int o = 0; o < 16; o++)
+	if (found)
 	{
-		if (WorkingDisk[nodeSector][nodeOffset + 12 + o] != 0)
+		for (int o = 0; o < 16; o++)
 		{
-			nodeName.append(1, (char)WorkingDisk[nodeSector][nodeOffset + 12 + o]);
+			if (WorkingDisk[nodeSector][nodeOffset + 12 + o] != 0)
+			{
+				nodeName.append(1, (char)WorkingDisk[nodeSector][nodeOffset + 12 + o]);
+			}
 		}
 	}
 
@@ -1207,8 +1361,9 @@ int UMDLibFS::DumpLocalDisk()
 				buffer.append(1, temp[0]);
 				buffer.append(1, ' ');
 			}
+			Logging::WriteToMemDumpLog(buffer);
 		}
-		Logging::WriteToMemDumpLog(buffer);
+		
 
 	}
 
@@ -1218,5 +1373,91 @@ int UMDLibFS::DumpLocalDisk()
 
 int UMDLibFS::DumpRemoteDisk()
 {
+	Logging::WriteToMemDumpLog("External Disk Dump -----------------------");
+
+	Logging::WriteToMemDumpLog(("SuperBlock: " + ExternalDisk[0][0]));
+
+	//Write the datablock map
+	Logging::WriteToMemDumpLog("DataBlock Map");
+	for (int i = 0; i < 990; i += 200)
+	{
+		string buffer = "";
+		for (int j = 0; j < 200; j++)
+		{
+			if (ExternalDataBlockMap[i + j])
+			{
+				buffer.append(1, '1');
+			}
+			else
+			{
+				buffer.append(1, '0');
+			}
+			buffer.append(1, ' ');
+		}
+
+		Logging::WriteToMemDumpLog(buffer);
+	}
+
+	Logging::WriteToMemDumpLog("Data");
+
+	//Write Inodes
+	for (int i = 3; i < 6; i++)
+	{
+		string buffer = "";
+		for (int j = 0; j < 512; j++)
+		{
+			char temp[256];
+			sprintf_s(temp, "%d", ExternalDisk[i][j]);
+
+			buffer.append(1, temp[0]);
+			buffer.append(1, ' ');
+		}
+		Logging::WriteToMemDumpLog(buffer);
+	}
+
+	//Write rest of disk
+	for (int i = 9; i < 1000; i++)
+	{
+		string buffer = "";
+		if (ExternalDataBlockMap[i] == true)
+		{
+			for (int j = 0; j < 512; j++)
+			{
+				char temp[256];
+				sprintf_s(temp, "%d", ExternalDisk[i][j]);
+
+				buffer.append(1, temp[0]);
+				buffer.append(1, ' ');
+			}
+			Logging::WriteToMemDumpLog(buffer);
+		}
+		
+
+	}
+
+	Logging::WriteToMemDumpLog("End Disk Dump -------------------------");
+	return 0;
+}
+
+int UMDLibFS::CheckNodeDuplicate(string name, int sector, int offset, int parentNode)
+{
+	int calcOffset;
+	for (int i = 3; i < 9; i++)
+	{
+		for (int j = 0; j < 17; j++)
+		{
+			calcOffset = j * 30;
+			int possNodeNum = WorkingDisk[i][calcOffset + 28];
+			string nodeName = GetInodeName(possNodeNum);
+
+			if ((nodeName == name) && ((i != sector) || (calcOffset != offset)))
+			{
+				if (WorkingDisk[i][calcOffset + 29] == parentNode)
+				{
+					return -1;
+				}
+			}
+		}
+	}
 	return 0;
 }
