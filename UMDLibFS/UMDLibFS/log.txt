@@ -1,8 +1,18 @@
 FS boot with result: 0
 Create Dir at: /Test/ , Result = 0
 Create Dir at: /Test/SubTest/ , Result = 0
-FS boot with result: 0
-Create Dir at: /Test/ , Result = 0
-Create Dir at: /Test/SubTest/ , Result = 0
-Create Dir at: /Test/SubTest/ , Result = -1
-E_DUPLICATE_FILE_NAME
+
+Create Dir at: /Test/SubTest2/ , Result = 0
+
+Dir Unlink at : /Test/SubTest2/, Result = 0
+Dir Size at : /Test/, Result = 1
+File Create at : /Test/dumb.txt, Result = 0
+Tried to open file at /Test/dumb.txt, with result: 0
+Wrote to File at /Test/dumb.txt, with result 22
+Wrote: This is some test text
+Read file at /Test/dumb.txt, with result 22
+Wrote: This is some test text
+Tried to close file with FD: 0, with result: 0
+Read Dir at /Test/, with result 0
+Read This is some test textSubTestdumb.txt From Dir
+FS sync with result 0

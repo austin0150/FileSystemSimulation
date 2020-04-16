@@ -148,7 +148,7 @@ int UMDLibFS::FileCreate(string file)
 
 	if (NumInodes == MAX_FILES)
 	{
-		osErrMsg = "E_FILE_CREATE";
+		osErrMsg = "E_NUM_INODES";
 		return -1;
 	}
 
@@ -609,6 +609,12 @@ int UMDLibFS::DirCreate(string path)
 		return -1;
 	}
 
+	if (NumInodes == MAX_FILES)
+	{
+		osErrMsg = "E_MAX_INODES";
+		return -1;
+	}
+
 	int nodeNum = NavigateToDir(path);
 	if (nodeNum == -1)
 	{
@@ -810,6 +816,12 @@ int UMDLibFS::DirUnlink(string path)
 	if (FileSystemUnavailible)
 	{
 		osErrMsg = "E_INVALID_ACCESS_ATTEMPT";
+		return -1;
+	}
+
+	if (path == "/")
+	{
+		osErrMsg = "E_DEL_ROOT_DIR";
 		return -1;
 	}
 
@@ -1349,8 +1361,9 @@ int UMDLibFS::DumpLocalDisk()
 				buffer.append(1, temp[0]);
 				buffer.append(1, ' ');
 			}
+			Logging::WriteToMemDumpLog(buffer);
 		}
-		Logging::WriteToMemDumpLog(buffer);
+		
 
 	}
 
@@ -1416,8 +1429,9 @@ int UMDLibFS::DumpRemoteDisk()
 				buffer.append(1, temp[0]);
 				buffer.append(1, ' ');
 			}
+			Logging::WriteToMemDumpLog(buffer);
 		}
-		Logging::WriteToMemDumpLog(buffer);
+		
 
 	}
 
