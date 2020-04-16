@@ -146,6 +146,12 @@ int UMDLibFS::FileCreate(string file)
 		return -1;
 	}
 
+	if (NumInodes == MAX_FILES)
+	{
+		osErrMsg = "E_FILE_CREATE";
+		return -1;
+	}
+
 	int temp1, temp2;
 	if (GetNodeLocation(file, temp1,temp2) != -1)
 	{
@@ -167,6 +173,12 @@ int UMDLibFS::FileCreate(string file)
 	int lastNode = SplitFilePath(splitPath, file) - 1;
 	string nodeName = splitPath[lastNode];
 	int nameLength = nodeName.length();
+
+	if (nameLength > 16)
+	{
+		osErrMsg = "E_FILE_NAME_LENGTH";
+		return -1;
+	}
 
 	//Get the offset of the parent directory
 	for (int i = 3; i < 9; i++)
@@ -204,6 +216,13 @@ int UMDLibFS::FileCreate(string file)
 				j = 47;
 			}
 		}
+	}
+
+	//check for dir duplicates
+	if (CheckNodeDuplicate(nodeName, newNodeSector, newNodeOffset) == -1)
+	{
+		osErrMsg = "E_DUPLICATE_FILE_NAME";
+		return -1;
 	}
 
 	//Add new Inode to parent directory
@@ -643,6 +662,13 @@ int UMDLibFS::DirCreate(string path)
 		}
 	}
 
+	//check for dir duplicates
+	if (CheckNodeDuplicate(nodeName, newNodeSector, newNodeOffset) == -1)
+	{
+		osErrMsg = "E_DUPLICATE_FILE_NAME";
+		return -1;
+	}
+
 	//Add new Inode to parent directory
 	int nodeWPointers = WorkingDisk[nodeSector][nodeOffset + 2];
 	for (int i = 0; i < 512; i++)
@@ -654,6 +680,7 @@ int UMDLibFS::DirCreate(string path)
 			break;
 		}
 	}
+
 	WorkingDisk[nodeSector][nodeOffset] ++; //Update directory size
 
 	//determine block to hold pointers to directory children
@@ -1389,5 +1416,23 @@ int UMDLibFS::DumpRemoteDisk()
 	}
 
 	Logging::WriteToMemDumpLog("End Disk Dump -------------------------");
+	return 0;
+}
+
+int UMDLibFS::CheckNodeDuplicate(string name, int sector, int offset)
+{
+	for (int i = 3; i < 9; i++)
+	{
+		for (int j = 0; j < 17; j++)
+		{
+			if ((GetInodeName(WorkingDisk[i][j + 28]) == name) && (i != sector) && (j != offset))
+			{
+				if (WorkingDisk[i][j + 29] == WorkingDisk[sector][offset + 29])
+				{
+					return -1;
+				}
+			}
+		}
+	}
 	return 0;
 }

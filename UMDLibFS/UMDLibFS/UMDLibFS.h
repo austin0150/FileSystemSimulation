@@ -56,6 +56,7 @@ public:
 	int AllocDataBlock();
 	int DumpLocalDisk();
 	int DumpRemoteDisk();
+	int CheckNodeDuplicate(string name, int sector, int offset);
 	void INIT();
 };
 

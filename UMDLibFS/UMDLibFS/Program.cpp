@@ -3,12 +3,42 @@
 #include "Logging.h"
 
 void Logit(string);
+void CovertString(char arr[], string line);
+int RunTests();
 
 int main()
 {
+	RunTests();
+}
+
+void Logit(string line)
+{
+	Logging::WriteToLogFile(line);
+	Logging::WriteToMemDumpLog(line);
+	
+}
+
+void CovertString(char arr[], string line)
+{
+	for (int i = 0; i < line.length(); i++)
+	{
+		arr[i] = line[i];
+
+		if (i == (line.length() - 1))
+		{
+			arr[i + 1] = NULL;
+		}
+	}
+}
+
+int RunTests()
+{
 	UMDLibFS lib;
 	char TempString[256];
+	char TempBuffer[256];
 	int result = 0;
+	int size = 50;
+	string path;
 
 	result = lib.FSBoot();
 	sprintf_s(TempString, "FS boot with result: %d", result);
@@ -16,28 +46,39 @@ int main()
 	lib.DumpLocalDisk();
 	lib.DumpRemoteDisk();
 
-	string path = "/Test/";
+	path = "/Test/";
 	string buffer = "";
-	int size = 50;
 	result = lib.DirCreate(path);
-	sprintf_s(TempString, "Create Dir at: %s , Result = %d", path, result);
+
+	CovertString(TempBuffer, path);
+	sprintf_s(TempString, "Create Dir at: %s , Result = %d", TempBuffer, result);
 	Logit(TempString);
 	lib.DumpLocalDisk();
 
 	path = "/Test/SubTest/";
 	result = lib.DirCreate(path);
-	sprintf_s(TempString, "Create Dir at: %s , Result = %d", path, result);
+
+	CovertString(TempBuffer, path);
+	sprintf_s(TempString, "Create Dir at: %s , Result = %d", TempBuffer, result);
 	Logit(TempString);
 	lib.DumpLocalDisk();
 
-	path = "/Test/SubTest2/";
+	path = "/Test/SubTest/";
 	result = lib.DirCreate(path);
-	sprintf_s(TempString, "Create Dir at: %s , Result = %d", path, result);
+
+	CovertString(TempBuffer, path);
+	sprintf_s(TempString, "Create Dir at: %s , Result = %d", TempBuffer, result);
 	Logit(TempString);
+	Logit(lib.osErrMsg);
 	lib.DumpLocalDisk();
 
 	path = "/Test/";
 	result = lib.DirSize(path);
+
+	CovertString(TempBuffer, path);
+	sprintf_s(TempString, "Dir Size at : %s, Result = %d", TempBuffer, result);
+	Logit(TempString);
+	lib.DumpLocalDisk();
 
 	path = "/Test/";
 	result = lib.DirRead(path, buffer, size);
@@ -63,11 +104,4 @@ int main()
 	//result = lib.FileRead()
 
 	return result;
-}
-
-void Logit(string line)
-{
-	Logging::WriteToLogFile(line);
-	Logging::WriteToMemDumpLog(line);
-	
 }
